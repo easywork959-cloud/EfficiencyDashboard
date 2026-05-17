@@ -313,6 +313,151 @@ tbody tr:last-child td{border-bottom:none;}
   .main{padding:0;}
 }
 
+/* ============ RS COACHING ============ */
+.coaching-tab{
+  border:1px solid var(--line-2);
+  background:var(--surface);
+  color:var(--ink-soft);
+  cursor:pointer;
+  font-weight:600;
+  transition:all .15s;
+}
+.coaching-tab.active{background:#fef3c7;border-color:#e8a87c;color:#7c4a2a;}
+.coaching-kpi-strip{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
+  gap:10px;
+  margin:14px 0;
+}
+.coaching-kpi-cell{
+  background:linear-gradient(135deg, rgba(232,168,124,.08), rgba(245,192,96,.04));
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:11px 13px;
+}
+.coaching-kpi-cell .ckpi-label{
+  font-size:10.5px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  color:var(--ink-soft);
+  font-weight:600;
+}
+.coaching-kpi-cell .ckpi-value{
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:21px;
+  color:var(--ink);
+  margin-top:4px;
+}
+.coaching-kpi-cell .ckpi-sub{
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin-top:2px;
+}
+/* 6-Step radar dots */
+.coaching-steps-grid{
+  display:grid;
+  grid-template-columns:repeat(7, 1fr);
+  gap:8px;
+  margin:14px 0;
+}
+.cstep-cell{
+  background:var(--bg-soft);
+  border-radius:8px;
+  padding:10px 8px;
+  text-align:center;
+}
+.cstep-cell .cs-label{
+  font-size:10px;
+  color:var(--ink-soft);
+  font-weight:600;
+  margin-bottom:4px;
+  min-height:24px;
+  line-height:1.2;
+}
+.cstep-cell .cs-value{
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:18px;
+}
+.cstep-cell .cs-bar{
+  margin-top:5px;
+  height:5px;
+  background:#fff;
+  border-radius:3px;
+  overflow:hidden;
+}
+.cstep-cell .cs-bar-fill{
+  height:100%;
+  background:linear-gradient(90deg, #e8a87c, #f5c060);
+  border-radius:3px;
+  transition:width .35s;
+}
+/* RS leaderboard rows */
+.rs-leader-row{
+  display:grid;
+  grid-template-columns:30px 1fr auto auto auto;
+  gap:12px;
+  align-items:center;
+  padding:9px 12px;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+}
+.rs-leader-row:hover{background:var(--bg-soft);}
+.rs-rank{font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--ink-soft);}
+.rs-rank.top1{color:#f59e0b;}
+.rs-rank.top2{color:#94a3b8;}
+.rs-rank.top3{color:#d97706;}
+.rs-name{font-weight:600;color:var(--ink);}
+.rs-stats{font-size:10.5px;color:var(--ink-soft);font-family:var(--font-mono);}
+.rs-score-tag{
+  padding:3px 10px;
+  border-radius:14px;
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:12px;
+  background:var(--good-soft);
+  color:var(--good);
+}
+.rs-score-tag.medium{background:#fef3c7;color:#92400e;}
+.rs-score-tag.low{background:var(--bad-soft);color:var(--bad);}
+/* Coaching session table */
+.coaching-sessions-tbl{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+.coaching-sessions-tbl th{
+  background:var(--bg-soft);
+  padding:7px 8px;
+  text-align:left;
+  font-weight:700;
+  color:var(--ink-soft);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.4px;
+  border-bottom:2px solid var(--line);
+}
+.coaching-sessions-tbl td{
+  padding:7px 8px;
+  border-bottom:1px solid var(--line);
+  vertical-align:top;
+}
+.coaching-sessions-tbl tr:hover{background:var(--bg-soft);}
+.csess-score-pill{
+  display:inline-block;
+  padding:1px 8px;
+  border-radius:10px;
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:11px;
+  min-width:38px;
+  text-align:center;
+}
+.csess-pill-hi{background:var(--good-soft);color:var(--good);}
+.csess-pill-md{background:#fef3c7;color:#92400e;}
+.csess-pill-lo{background:var(--bad-soft);color:var(--bad);}
+
 /* ============ DENSITY HEATMAP (Block-style) ============ */
 #heatmapContainer{margin-top:14px;}
 .heatmap-grid{display:grid;gap:6px;}
@@ -1213,6 +1358,10 @@ tbody tr:last-child td{border-bottom:none;}
         <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l1-5h16l1 5"/><path d="M5 9v11a1 1 0 001 1h12a1 1 0 001-1V9"/><path d="M9 22V12h6v10"/></svg>
         Shop Type
       </div>
+      <div class="nav-item" data-view="rs-coaching" onclick="navigateTo('rs-coaching', this)">
+        <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 11l-3 3-2-2"/></svg>
+        RS Coaching
+      </div>
       <div class="nav-item" data-view="cost-to-serve" onclick="navigateTo('cost-to-serve', this)">
         <svg class="nav-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="12" x2="16" y2="14"/></svg>
         Cost-to-Serve
@@ -1374,6 +1523,14 @@ tbody tr:last-child td{border-bottom:none;}
         <span class="filter-label">📍 จังหวัด</span>
         <select class="filter-select" id="filterProvince" onchange="onFilterChange('province')">
           <option value="all">ทุกจังหวัด</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">💳 Sale Type</span>
+        <select class="filter-select" id="filterSaleType" onchange="onFilterChange('saleType')">
+          <option value="all">ทั้งหมด</option>
+          <option value="Credit">Credit</option>
+          <option value="Presales">Presales</option>
         </select>
       </div>
       <div class="filter-group">
@@ -1708,6 +1865,28 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
     </div>
 
+    <!-- ============ RS COACHING SECTION ============ -->
+    <div class="row" style="grid-template-columns:1fr;" id="section-rs-coaching">
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title"><span class="icon-dot" style="background:#e8a87c;"></span>👥 RS Coaching Tracker — 6-Step Call Selling Score</div>
+            <div class="card-subtitle">บันทึก Coaching session ของ RS ที่เข้าสอน Salesman · คะแนนเต็ม 3.0 ตามมาตรฐาน Suntory</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span style="font-size:11px;color:var(--ink-soft);">View:</span>
+            <button class="btn btn-secondary coaching-tab active" data-cview="summary" onclick="setCoachingView('summary')" style="font-size:11px;padding:5px 11px;">📊 Summary</button>
+            <button class="btn btn-secondary coaching-tab" data-cview="rs-leaderboard" onclick="setCoachingView('rs-leaderboard')" style="font-size:11px;padding:5px 11px;">🏆 RS Leaderboard</button>
+            <button class="btn btn-secondary coaching-tab" data-cview="sessions" onclick="setCoachingView('sessions')" style="font-size:11px;padding:5px 11px;">📋 Sessions</button>
+          </div>
+        </div>
+        <!-- KPI Strip -->
+        <div id="coachingKpiStrip" class="coaching-kpi-strip"></div>
+        <!-- Body -->
+        <div id="coachingBody"></div>
+      </div>
+    </div>
+
     <!-- Route Detail Table -->
     <div class="row" style="grid-template-columns:1fr;" id="section-table">
       <div class="drill-card">
@@ -1738,8 +1917,8 @@ tbody tr:last-child td{border-bottom:none;}
                   <th>Distributor</th>
                   <th>Region</th>
                   <th>Visit Pattern</th>
-                  <th>Segment</th>
-                  <th>Shop Type</th>
+                  <th title="จำนวน Segment ที่ดูแลในเส้นทางนี้">Segments</th>
+                  <th title="จำนวน Shop Type · จังหวัด">Outlet Mix</th>
                   <th class="num">Sales (฿)</th>
                   <th class="num">CTS (฿)</th>
                   <th class="num">RE</th>
@@ -1821,6 +2000,31 @@ const PATTERN_TO_FREQ = {
   'Tele-Sales':'F3',
   'Van Sales':'F2',
   'Wholesale Direct':'F4'
+};
+
+// อำเภอ (district) ในแต่ละจังหวัด — ใช้ generate outlets ระดับร้าน
+const PROVINCE_DISTRICTS = {
+  'เชียงใหม่': ['เมืองเชียงใหม่','แม่ริม','สันทราย','ดอยสะเก็ด','หางดง','สันป่าตอง'],
+  'ลำปาง': ['เมืองลำปาง','เกาะคา','แม่ทะ','แจ้ห่ม','วังเหนือ'],
+  'เชียงราย': ['เมืองเชียงราย','แม่สาย','เชียงแสน','แม่จัน','พาน','เทิง'],
+  'ขอนแก่น': ['เมืองขอนแก่น','บ้านไผ่','พล','ชุมแพ','น้ำพอง','หนองเรือ'],
+  'อุดรธานี': ['เมืองอุดรธานี','กุมภวาปี','หนองหาน','บ้านดุง','เพ็ญ'],
+  'อุบลราชธานี': ['เมืองอุบลฯ','วารินชำราบ','เดชอุดม','พิบูลมังสาหาร','ตระการพืชผล'],
+  'กรุงเทพมหานคร': ['ดินแดง','ห้วยขวาง','บางกะปิ','คลองเตย','วัฒนา','พระโขนง','สาทร','บางรัก','ปทุมวัน','จตุจักร'],
+  'พระนครศรีอยุธยา': ['เมืองอยุธยา','บางปะอิน','บางปะหัน','อุทัย','วังน้อย'],
+  'นนทบุรี': ['เมืองนนทบุรี','บางใหญ่','บางบัวทอง','ปากเกร็ด','ไทรน้อย'],
+  'ปทุมธานี': ['เมืองปทุมธานี','ลาดหลุมแก้ว','คลองหลวง','ธัญบุรี','ลำลูกกา'],
+  'สงขลา': ['หาดใหญ่','เมืองสงขลา','สะเดา','สิงหนคร','รัตภูมิ'],
+  'สุราษฎร์ธานี': ['เมืองสุราษฎร์ฯ','กาญจนดิษฐ์','พุนพิน','เกาะสมุย','ดอนสัก'],
+  'ภูเก็ต': ['เมืองภูเก็ต','กะทู้','ถลาง']
+};
+
+// จังหวัดที่ใกล้เคียงในภาคเดียวกัน (สำหรับ "1 salesman ดูแลข้ามจังหวัด")
+const REGION_PROVINCES = {
+  'NOR': ['เชียงใหม่','ลำปาง','เชียงราย'],
+  'NOE': ['ขอนแก่น','อุดรธานี','อุบลราชธานี'],
+  'BKKCT': ['กรุงเทพมหานคร','พระนครศรีอยุธยา','นนทบุรี','ปทุมธานี'],
+  'SOU': ['สงขลา','สุราษฎร์ธานี','ภูเก็ต']
 };
 const ASM_PREFIXES = ['สมชาย','วิชัย','ปรีชา','นภา','สุดา','อรรถ','พิทักษ์','ดารณี'];
 const RS_PREFIXES = ['อนุชา','สมศักดิ์','รัตนา','วิภา','ชัยยง','พรทิพย์','เกรียงไกร','สุนีย์','ธีระ','มนตรี','จันทรา','ปรีดา','วราภรณ์','กิตติ'];
@@ -1929,6 +2133,8 @@ function makeMockData(){
               segment: SEGMENTATION_VALUES[segIdx] || SEGMENTATION_VALUES[0],
               shopType: SHOP_TYPE_VALUES[shopTypeIdx] || SHOP_TYPE_VALUES[0],
               salesType: SALES_TYPE,
+              outlets: generateOutletsForRoute(reg, dist, activeBase, freq, segIdx, shopTypeIdx),
+              coaching: generateCoachingForRoute(rsName, smName, periods),
               history
             });
           }
@@ -1937,6 +2143,97 @@ function makeMockData(){
     });
   });
   return data;
+}
+
+// ==================== OUTLET-LEVEL GENERATOR ====================
+// แต่ละ outlet มี: id, name, province, district, segment, shopType, saleType
+// 1 route ดูแลหลาย outlets ที่อาจอยู่ในต่างจังหวัด/อำเภอ/segment/shoptype
+function generateOutletsForRoute(reg, dist, activeBase, freq, defaultSegIdx, defaultShopIdx){
+  const outlets = [];
+  const homeProvince = extractProvince(dist);
+  const provincesInRegion = REGION_PROVINCES[reg] || [homeProvince];
+  // จำนวน outlet ต่อ route — F1 ขายทุกวัน outlet เยอะ, F4 ขายทุก 2 สัปดาห์ outlet น้อยกว่า
+  const outletCount = Math.max(30, Math.min(200, Math.round(activeBase * rnd(0.85, 1.15))));
+  // % outlets ที่อยู่นอกจังหวัดหลัก (cross-province coverage)
+  const crossProvinceRatio = rnd(0.10, 0.35);
+  // sale type mix per outlet (Credit vs Presales) — F1 มี credit เยอะ, F4 ส่วนใหญ่ Presales
+  const creditRatio = freq==='F1'? 0.65 : freq==='F2'? 0.45 : freq==='F3'? 0.30 : 0.15;
+  // ความหลากหลายของ segment ใน 1 route — มากๆ จะแยก segment ละหลายร้าน
+  const segVariance = rnd(0.2, 0.6); // % ที่เป็น segment อื่นนอกเหนือ default
+  const shopVariance = rnd(0.3, 0.7);
+
+  for(let i=0;i<outletCount;i++){
+    // เลือกจังหวัด
+    let province;
+    if(R() < crossProvinceRatio && provincesInRegion.length > 1){
+      province = provincesInRegion[rndInt(0, provincesInRegion.length-1)];
+    } else {
+      province = homeProvince;
+    }
+    const districts = PROVINCE_DISTRICTS[province] || ['—'];
+    const district = districts[rndInt(0, districts.length-1)];
+    // เลือก segment
+    const segIdx = R() < segVariance
+      ? rndInt(0, SEGMENTATION_VALUES.length-1)
+      : defaultSegIdx;
+    // เลือก shop type
+    const shopIdx = R() < shopVariance
+      ? rndInt(0, SHOP_TYPE_VALUES.length-1)
+      : defaultShopIdx;
+    // sale type ต่อ outlet
+    const saleType = R() < creditRatio ? 'Credit' : 'Presales';
+    // monthly metrics สมมุติ
+    const monthlySales = Math.round(rnd(8000, 45000)); // ฿/outlet/month
+    const visitFreq = freq==='F1'? rndInt(20,30) : freq==='F2'? rndInt(8,12) : freq==='F3'? rndInt(4,6) : rndInt(2,3);
+    const strikeRate = Math.max(40, Math.min(95, 78 + (R()-.5)*20));
+    outlets.push({
+      id: `O${reg}-${i+1}-${rndInt(1000,9999)}`,
+      province,
+      district,
+      segment: SEGMENTATION_VALUES[segIdx] || SEGMENTATION_VALUES[0],
+      shopType: SHOP_TYPE_VALUES[shopIdx] || SHOP_TYPE_VALUES[0],
+      saleType,
+      monthlySales,
+      visitFreq,
+      strikeRate
+    });
+  }
+  return outlets;
+}
+
+// ==================== RS COACHING GENERATOR ====================
+// แต่ละ route มีบันทึก Coaching session ของ RS ที่เข้าไปสอน salesman รายเดือน
+// ใช้ 6-Step Call Selling Score (Customer Prep / Introduction / Survey / Presentation / Merchandising / Review)
+function generateCoachingForRoute(rsName, smName, periods){
+  const sessions = [];
+  // RS ทำ Coaching ประมาณ 60-90% ของเดือนที่มีข้อมูล
+  periods.forEach(p=>{
+    if(R() < 0.78){
+      // base score 2.0-2.9 (out of 3.0 like data ที่ user upload มา)
+      const baseScore = rnd(1.8, 3.0);
+      const noise = ()=>Math.max(0, Math.min(3.0, baseScore + (R()-.5)*0.6));
+      sessions.push({
+        period: p,
+        date: `${p}-${String(rndInt(1,28)).padStart(2,'0')}`,
+        rs: rsName,
+        salesman: smName,
+        sessionType: R()<0.7 ? 'Field Coaching' : R()<0.5 ? 'Classroom' : 'One-on-One Review',
+        duration_min: rndInt(30, 180),
+        // 6-step scoring (Suntory standard)
+        customerPrep: +noise().toFixed(1),
+        introduction: +noise().toFixed(1),
+        surveyStock: +noise().toFixed(1),
+        presentation: +noise().toFixed(1),
+        merchandising: +noise().toFixed(1),
+        review: +noise().toFixed(1),
+        attitude: +noise().toFixed(1),
+        overall: +baseScore.toFixed(1),
+        notes: R()<0.3 ? 'ต้องพัฒนา Presentation skill' : R()<0.5 ? 'Sales technique ดี ขาด follow-up' : R()<0.7 ? 'Stocktake ต้องละเอียดขึ้น' : 'ภาพรวมดี รักษามาตรฐาน',
+        followUpAction: R()<0.4 ? 'Re-coaching เดือนหน้า' : R()<0.7 ? 'Monitor 2 สัปดาห์' : 'ปกติ'
+      });
+    }
+  });
+  return sessions;
 }
 
 // ==================== STATE ====================
@@ -2286,6 +2583,7 @@ function getFilteredRoutes(){
   const fSeg = document.getElementById('filterSegment')?.value || 'all';
   const fShop = document.getElementById('filterShopType')?.value || 'all';
   const fProv = document.getElementById('filterProvince')?.value || 'all';
+  const fSale = document.getElementById('filterSaleType')?.value || 'all';
   const search = (document.getElementById('globalSearch')?.value || '').trim().toLowerCase();
   return DATA.filter(r=>{
     if(fReg!=='all' && r.region!==fReg) return false;
@@ -2294,13 +2592,29 @@ function getFilteredRoutes(){
     if(fRS!=='all' && r.rs!==fRS) return false;
     if(fSM!=='all' && r.salesman!==fSM) return false;
     if(fFreq!=='all' && r.frequency!==fFreq) return false;
-    if(fSeg!=='all' && r.segment!==fSeg) return false;
-    if(fShop!=='all' && r.shopType!==fShop) return false;
-    if(fProv!=='all' && r.province!==fProv) return false;
+    // Outlet-level filters: route matches if ANY outlet matches
+    if(fSeg!=='all'){
+      const match = (r.outlets||[]).some(o=>o.segment===fSeg);
+      if(!match) return false;
+    }
+    if(fShop!=='all'){
+      const match = (r.outlets||[]).some(o=>o.shopType===fShop);
+      if(!match) return false;
+    }
+    if(fProv!=='all'){
+      const match = (r.outlets||[]).some(o=>o.province===fProv) || r.province===fProv;
+      if(!match) return false;
+    }
+    if(fSale!=='all'){
+      const match = (r.outlets||[]).some(o=>o.saleType===fSale);
+      if(!match) return false;
+    }
     if(search){
+      const outletSearchable = (r.outlets||[]).map(o=>`${o.province} ${o.district} ${o.segment} ${o.shopType} ${o.saleType}`).join(' ');
       const haystack = [
         r.routeId, r.salesman, r.rs, r.asm, r.distributor,
-        r.province, r.region, r.segment, r.shopType, r.frequency, r.visitPattern
+        r.province, r.region, r.segment, r.shopType, r.frequency, r.visitPattern,
+        outletSearchable
       ].join(' ').toLowerCase();
       if(!haystack.includes(search)) return false;
     }
@@ -2346,7 +2660,8 @@ const FILTER_ID_MAP = {
   frequency:'filterFreq',
   segment:'filterSegment',
   shopType:'filterShopType',
-  province:'filterProvince'
+  province:'filterProvince',
+  saleType:'filterSaleType'
 };
 const FILTER_LABELS = {
   region:'Region',
@@ -2357,7 +2672,8 @@ const FILTER_LABELS = {
   frequency:'Frequency',
   segment:'Segment',
   shopType:'Shop Type',
-  province:'Province'
+  province:'Province',
+  saleType:'Sale Type'
 };
 
 function getFilterValue(field){
@@ -2370,23 +2686,28 @@ function setFilterValue(field, val){
   if(sel) sel.value = val;
 }
 
-// Get current "scope" — DATA filtered by ALL active selections except specified field (for cascade self-reference)
+// Get current "scope" — DATA filtered by ALL active selections except specified field
 function dataScopedExcept(excludeField){
   return DATA.filter(r=>{
     for(const f of Object.keys(FILTER_ID_MAP)){
       if(f === excludeField) continue;
       const v = getFilterValue(f);
       if(v === 'all') continue;
-      const routeVal = (f==='region') ? r.region :
-                       (f==='distributor') ? r.distributor :
-                       (f==='asm') ? r.asm :
-                       (f==='rs') ? r.rs :
-                       (f==='salesman') ? r.salesman :
-                       (f==='frequency') ? r.frequency :
-                       (f==='segment') ? r.segment :
-                       (f==='shopType') ? r.shopType :
-                       (f==='province') ? r.province : null;
-      if(routeVal !== v) return false;
+      // Route-level filters
+      if(f==='region' || f==='distributor' || f==='asm' || f==='rs' || f==='salesman' || f==='frequency'){
+        const routeVal = f==='region' ? r.region :
+                         f==='distributor' ? r.distributor :
+                         f==='asm' ? r.asm :
+                         f==='rs' ? r.rs :
+                         f==='salesman' ? r.salesman :
+                         r.frequency;
+        if(routeVal !== v) return false;
+      }
+      // Outlet-level filters: route matches if ANY outlet matches
+      else if(f==='segment' || f==='shopType' || f==='province' || f==='saleType'){
+        const match = (r.outlets||[]).some(o=>o[f]===v) || (f==='province' && r.province===v);
+        if(!match) return false;
+      }
     }
     return true;
   });
@@ -2434,13 +2755,20 @@ function refreshCascadeOptions(){
     }).filter(Boolean))].sort();
     fill(id, values, field==='region'?v=>`${v} - ${REGION_NAMES[v]||v}`:null);
   });
-  // Same for the other dependent filters
-  ['frequency','segment','shopType','province'].forEach(field=>{
-    const id = FILTER_ID_MAP[field];
-    const sel = document.getElementById(id);
-    if(!sel) return;
+  // Frequency — route-level
+  const freqId = FILTER_ID_MAP.frequency;
+  if(document.getElementById(freqId)){
+    const freqs = [...new Set(dataScopedExcept('frequency').map(r=>r.frequency).filter(Boolean))].sort();
+    fill(freqId, freqs);
+  }
+  // Segment / Shop / Province / SaleType — OUTLET LEVEL
+  // Collect values from outlets across all routes in scope (excluding this field)
+  [['segment','filterSegment'],['shopType','filterShopType'],['province','filterProvince'],['saleType','filterSaleType']].forEach(([field,id])=>{
+    if(!document.getElementById(id)) return;
     const scope = dataScopedExcept(field);
-    const values = [...new Set(scope.map(r=>r[field]).filter(Boolean))].sort();
+    const values = [...new Set(
+      scope.flatMap(r=>(r.outlets||[]).map(o=>o[field])).filter(Boolean)
+    )].sort();
     fill(id, values);
   });
 }
@@ -3269,8 +3597,8 @@ function renderRouteTable(){
         <td style="font-size:11px;">${r.distributor}</td>
         <td><span class="tag tag-mute">${r.region}</span></td>
         <td><span class="tag tag-info">${r.visitPattern}</span></td>
-        <td style="font-size:10.5px;"><span class="tag tag-mute">${r.segment||'-'}</span></td>
-        <td style="font-size:10.5px;color:var(--ink-2);">${r.shopType||'-'}</td>
+        <td style="font-size:10.5px;"><span class="tag tag-mute" title="${(r.outlets||[]).length} outlets · ${new Set((r.outlets||[]).map(o=>o.segment)).size} segments">${new Set((r.outlets||[]).map(o=>o.segment)).size||1} seg</span></td>
+        <td style="font-size:10.5px;color:var(--ink-2);" title="${new Set((r.outlets||[]).map(o=>o.shopType)).size} shop types · ${new Set((r.outlets||[]).map(o=>o.province)).size} จังหวัด">${new Set((r.outlets||[]).map(o=>o.shopType)).size||1} types · ${new Set((r.outlets||[]).map(o=>o.province)).size||1} จว.</td>
         <td class="num">${fmtTHB(r.sales)}</td>
         <td class="num">${fmtTHB(r.cts)}</td>
         <td class="num"><span class="cell-bar" style="width:${barWidth}px;"></span>${fmtNum(r.re,FORMULA==='ratio'||FORMULA==='banded'?2:1)}</td>
@@ -5564,6 +5892,251 @@ function mapKPIName(name){
   return 'sales'; // fallback
 }
 
+// ==================== RS COACHING ====================
+let COACHING_VIEW = 'summary'; // summary | rs-leaderboard | sessions
+
+function setCoachingView(v){
+  COACHING_VIEW = v;
+  document.querySelectorAll('.coaching-tab').forEach(el=>{
+    el.classList.toggle('active', el.dataset.cview === v);
+  });
+  renderCoaching();
+}
+
+function getAllCoachingSessions(){
+  const rows = getFilteredRoutes();
+  return rows.flatMap(r=>(r.coaching||[]).map(c=>({...c, route:r})));
+}
+
+function pillClass(score){
+  if(score >= 2.5) return 'csess-pill-hi';
+  if(score >= 2.0) return 'csess-pill-md';
+  return 'csess-pill-lo';
+}
+function scoreTagClass(score){
+  if(score >= 2.5) return '';
+  if(score >= 2.0) return 'medium';
+  return 'low';
+}
+
+function renderCoaching(){
+  const stripEl = document.getElementById('coachingKpiStrip');
+  const bodyEl = document.getElementById('coachingBody');
+  if(!stripEl || !bodyEl) return;
+
+  const sessions = getAllCoachingSessions();
+  if(!sessions.length){
+    stripEl.innerHTML = '';
+    bodyEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-soft);">ไม่มีข้อมูล Coaching ใน scope นี้</div>';
+    return;
+  }
+
+  // === KPI STRIP (always shown) ===
+  const totalSessions = sessions.length;
+  const totalHours = (sessions.reduce((a,s)=>a+(s.duration_min||0),0)/60).toFixed(1);
+  const avgOverall = sessions.reduce((a,s)=>a+s.overall, 0)/sessions.length;
+  const uniqueRS = new Set(sessions.map(s=>s.rs)).size;
+  const uniqueSM = new Set(sessions.map(s=>s.salesman)).size;
+  const lowScoreCount = sessions.filter(s=>s.overall < 2.0).length;
+  const recoachNeeded = sessions.filter(s=>s.followUpAction === 'Re-coaching เดือนหน้า').length;
+
+  stripEl.innerHTML = `
+    <div class="coaching-kpi-cell">
+      <div class="ckpi-label">📋 Sessions ทั้งหมด</div>
+      <div class="ckpi-value">${totalSessions}</div>
+      <div class="ckpi-sub">${totalHours} ชม. รวม</div>
+    </div>
+    <div class="coaching-kpi-cell">
+      <div class="ckpi-label">⭐ Avg Score</div>
+      <div class="ckpi-value">${avgOverall.toFixed(2)}<span style="font-size:13px;color:var(--ink-soft);">/3.0</span></div>
+      <div class="ckpi-sub">${avgOverall>=2.5?'ดี':avgOverall>=2.0?'ปานกลาง':'ต้องพัฒนา'}</div>
+    </div>
+    <div class="coaching-kpi-cell">
+      <div class="ckpi-label">👥 RS ที่ Active</div>
+      <div class="ckpi-value">${uniqueRS}</div>
+      <div class="ckpi-sub">สอน ${uniqueSM} salesman</div>
+    </div>
+    <div class="coaching-kpi-cell">
+      <div class="ckpi-label">⚠️ Sessions คะแนนต่ำ</div>
+      <div class="ckpi-value" style="color:${lowScoreCount>0?'var(--bad)':'var(--ink)'};">${lowScoreCount}</div>
+      <div class="ckpi-sub">&lt; 2.0/3.0 (ต้องดูแล)</div>
+    </div>
+    <div class="coaching-kpi-cell">
+      <div class="ckpi-label">🔄 Re-coaching ที่ต้องทำ</div>
+      <div class="ckpi-value" style="color:var(--accent);">${recoachNeeded}</div>
+      <div class="ckpi-sub">เดือนหน้า</div>
+    </div>
+  `;
+
+  // === BODY by VIEW ===
+  if(COACHING_VIEW === 'summary'){
+    renderCoachingSummary(bodyEl, sessions);
+  } else if(COACHING_VIEW === 'rs-leaderboard'){
+    renderCoachingLeaderboard(bodyEl, sessions);
+  } else {
+    renderCoachingSessions(bodyEl, sessions);
+  }
+}
+
+function renderCoachingSummary(bodyEl, sessions){
+  // 6-Step + Attitude average across all sessions
+  const steps = [
+    {key:'customerPrep',  label:'1. การเตรียมตัว\nก่อนเข้าร้าน'},
+    {key:'introduction',  label:'2. การแนะนำตัว\n(Introduction)'},
+    {key:'surveyStock',   label:'3. การสำรวจร้าน\nและนับสต๊อก'},
+    {key:'presentation',  label:'4. การนำเสนอ\nและเก็บเงิน'},
+    {key:'merchandising', label:'5. การจัดเรียงสินค้า\nและประเมิน'},
+    {key:'review',        label:'6. Review\nและ Closing'},
+    {key:'attitude',      label:'💚 Attitude\n(เจตคติ)'}
+  ];
+  const stepsHtml = steps.map(s=>{
+    const avg = sessions.reduce((a,x)=>a+(x[s.key]||0), 0)/sessions.length;
+    const widthPct = (avg/3.0)*100;
+    const color = avg>=2.5?'var(--good)':avg>=2.0?'#92400e':'var(--bad)';
+    return `<div class="cstep-cell">
+      <div class="cs-label">${s.label.replace('\n','<br>')}</div>
+      <div class="cs-value" style="color:${color};">${avg.toFixed(2)}</div>
+      <div class="cs-bar"><div class="cs-bar-fill" style="width:${widthPct}%;"></div></div>
+    </div>`;
+  }).join('');
+
+  // Weakest step
+  const stepAvgs = steps.map(s=>({label:s.label.replace('\n',' '), avg:sessions.reduce((a,x)=>a+(x[s.key]||0),0)/sessions.length}));
+  stepAvgs.sort((a,b)=>a.avg-b.avg);
+  const weakest = stepAvgs[0];
+  const strongest = stepAvgs[stepAvgs.length-1];
+
+  bodyEl.innerHTML = `
+    <div style="margin-top:6px;">
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;">📊 6-Step Call Selling — เฉลี่ยทุก session</div>
+      <div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:6px;">คะแนน 0-3.0 ตามมาตรฐาน Suntory · กราฟแสดง % เทียบกับคะแนนสูงสุด</div>
+      <div class="coaching-steps-grid">${stepsHtml}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;">
+      <div style="padding:13px;background:var(--good-soft);border-radius:9px;border-left:3px solid var(--good);">
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px;">💪 จุดแข็ง (Strongest)</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-top:4px;">${strongest.label}</div>
+        <div style="font-family:var(--font-mono);font-weight:700;color:var(--good);font-size:18px;margin-top:2px;">${strongest.avg.toFixed(2)} / 3.0</div>
+      </div>
+      <div style="padding:13px;background:var(--bad-soft);border-radius:9px;border-left:3px solid var(--bad);">
+        <div style="font-size:11px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px;">⚠️ จุดอ่อน (ต้องพัฒนา)</div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-top:4px;">${weakest.label}</div>
+        <div style="font-family:var(--font-mono);font-weight:700;color:var(--bad);font-size:18px;margin-top:2px;">${weakest.avg.toFixed(2)} / 3.0</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderCoachingLeaderboard(bodyEl, sessions){
+  // Group by RS
+  const byRS = {};
+  sessions.forEach(s=>{
+    if(!byRS[s.rs]) byRS[s.rs] = {rs:s.rs, sessions:[], smSet:new Set()};
+    byRS[s.rs].sessions.push(s);
+    byRS[s.rs].smSet.add(s.salesman);
+  });
+  const arr = Object.values(byRS).map(g=>({
+    rs: g.rs,
+    sessions: g.sessions.length,
+    salesmanCount: g.smSet.size,
+    avgScore: g.sessions.reduce((a,s)=>a+s.overall,0)/g.sessions.length,
+    avgDuration: g.sessions.reduce((a,s)=>a+(s.duration_min||0),0)/g.sessions.length,
+    totalHours: g.sessions.reduce((a,s)=>a+(s.duration_min||0),0)/60
+  }));
+  arr.sort((a,b)=>b.avgScore-a.avgScore);
+
+  bodyEl.innerHTML = `
+    <div style="margin-top:6px;">
+      <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;">🏆 RS Performance Ranking</div>
+      <div style="font-size:10.5px;color:var(--ink-soft);margin-bottom:8px;">เรียงตามคะแนนเฉลี่ยที่ RS ได้รับ จากการ Coach Salesman</div>
+      <div style="background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden;">
+        <div class="rs-leader-row" style="background:var(--bg-soft);font-weight:700;font-size:10.5px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;">
+          <div>#</div>
+          <div>RS Name</div>
+          <div>Sessions</div>
+          <div>ชม.รวม</div>
+          <div>Avg Score</div>
+        </div>
+        ${arr.map((rs,i)=>{
+          const rankCls = i===0?'top1':i===1?'top2':i===2?'top3':'';
+          const scoreCls = scoreTagClass(rs.avgScore);
+          return `<div class="rs-leader-row">
+            <div class="rs-rank ${rankCls}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+            <div>
+              <div class="rs-name">${escapeHtml(rs.rs)}</div>
+              <div class="rs-stats">${rs.salesmanCount} salesman · avg ${rs.avgDuration.toFixed(0)} นาที/session</div>
+            </div>
+            <div class="rs-stats">${rs.sessions}</div>
+            <div class="rs-stats">${rs.totalHours.toFixed(1)} ชม.</div>
+            <div><span class="rs-score-tag ${scoreCls}">${rs.avgScore.toFixed(2)}</span></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderCoachingSessions(bodyEl, sessions){
+  // Sort by date desc
+  const sorted = [...sessions].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const limited = sorted.slice(0, 80);
+  bodyEl.innerHTML = `
+    <div style="margin-top:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--ink);">📋 Coaching Session Log</div>
+          <div style="font-size:10.5px;color:var(--ink-soft);">แสดง ${limited.length} จาก ${sorted.length} sessions · เรียงจากใหม่สุด</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;max-height:560px;overflow-y:auto;border:1px solid var(--line);border-radius:9px;">
+        <table class="coaching-sessions-tbl">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>RS</th>
+              <th>Salesman</th>
+              <th>Type</th>
+              <th>เวลา</th>
+              <th title="Customer Preparation">1.Prep</th>
+              <th title="Introduction">2.Intro</th>
+              <th title="Survey & Stock">3.Survey</th>
+              <th title="Presentation">4.Pres</th>
+              <th title="Merchandising">5.Merch</th>
+              <th title="Review">6.Rev</th>
+              <th>Att</th>
+              <th>Overall</th>
+              <th>Notes</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${limited.map(s=>{
+              const cell = (v)=>`<td><span class="csess-score-pill ${pillClass(v)}">${v.toFixed(1)}</span></td>`;
+              return `<tr>
+                <td style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);white-space:nowrap;">${s.date}</td>
+                <td style="font-weight:600;color:var(--ink);">${escapeHtml(s.rs)}</td>
+                <td style="color:var(--ink-2);">${escapeHtml(s.salesman)}</td>
+                <td style="font-size:10.5px;color:var(--ink-soft);">${s.sessionType}</td>
+                <td style="font-family:var(--font-mono);font-size:10.5px;color:var(--ink-soft);">${s.duration_min}m</td>
+                ${cell(s.customerPrep)}
+                ${cell(s.introduction)}
+                ${cell(s.surveyStock)}
+                ${cell(s.presentation)}
+                ${cell(s.merchandising)}
+                ${cell(s.review)}
+                ${cell(s.attitude)}
+                <td><span class="csess-score-pill ${pillClass(s.overall)}" style="font-size:12px;font-weight:800;">${s.overall.toFixed(1)}</span></td>
+                <td style="font-size:10.5px;color:var(--ink-2);max-width:170px;">${escapeHtml(s.notes||'')}</td>
+                <td style="font-size:10px;color:${s.followUpAction==='Re-coaching เดือนหน้า'?'var(--bad)':s.followUpAction==='Monitor 2 สัปดาห์'?'#92400e':'var(--good)'};font-weight:600;">${escapeHtml(s.followUpAction||'')}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 // ==================== DENSITY HEATMAP ====================
 function renderDensityHeatmap(){
   const container = document.getElementById('heatmapContainer');
@@ -5713,37 +6286,45 @@ function renderSegmentationViz(){
   if(!barsEl) return;
   if(!rows.length){barsEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-soft);">ไม่มีข้อมูล</div>';return;}
 
-  // Aggregate by segment
+  // Aggregate by SEGMENT at OUTLET level (1 route has many outlets, each with its own segment)
   const groups = {};
   rows.forEach(r=>{
-    const s = r.segment || 'Unknown';
-    if(!groups[s]) groups[s]={segment:s, count:0, sales:0, cts:0, re:0, strike:0, pss:0};
-    groups[s].count++;
-    groups[s].sales+=r.sales;
-    groups[s].cts+=r.cts;
-    groups[s].re+=r.re;
-    groups[s].strike+=r.strike;
-    groups[s].pss+=r.pss;
+    (r.outlets||[]).forEach(o=>{
+      const s = o.segment || 'Unknown';
+      if(!groups[s]) groups[s]={segment:s, outlets:0, routes:new Set(), sales:0, monthlySales:0, strike:0, strikeCount:0};
+      groups[s].outlets++;
+      groups[s].routes.add(r.routeId);
+      groups[s].monthlySales += (o.monthlySales || 0);
+      groups[s].strike += o.strikeRate || 0;
+      groups[s].strikeCount++;
+    });
   });
-  const entries = Object.values(groups).map(g=>({...g, avgRE:g.re/g.count, avgStrike:g.strike/g.count, avgPSS:g.pss/g.count}));
-  entries.sort((a,b)=>b.sales - a.sales);
-  const totalRoutes = entries.reduce((a,e)=>a+e.count,0);
-  const totalSales = entries.reduce((a,e)=>a+e.sales,0);
-  const maxSales = Math.max(...entries.map(e=>e.sales));
+  const entries = Object.values(groups).map(g=>({
+    segment: g.segment,
+    outlets: g.outlets,
+    count: g.routes.size, // route count (unique)
+    sales: g.monthlySales,
+    avgRE: 0, // not applicable at outlet level
+    avgStrike: g.strikeCount > 0 ? g.strike/g.strikeCount : 0,
+    avgPSS: 70 + (g.strike/g.strikeCount||0)*0.1 // proxy
+  }));
+  entries.sort((a,b)=>b.outlets - a.outlets);
+  const totalOutlets = entries.reduce((a,e)=>a+e.outlets,0);
+  const maxOutlets = Math.max(...entries.map(e=>e.outlets), 1);
 
   const fSeg = document.getElementById('filterSegment')?.value || 'all';
 
   barsEl.innerHTML = entries.map(e=>{
-    const pct = totalSales>0 ? (e.sales/totalSales*100) : 0;
-    const widthPct = maxSales>0 ? (e.sales/maxSales*100) : 0;
+    const pct = totalOutlets>0 ? (e.outlets/totalOutlets*100) : 0;
+    const widthPct = maxOutlets>0 ? (e.outlets/maxOutlets*100) : 0;
     const isActive = fSeg === e.segment;
     return `
-      <div class="seg-bar-row" onclick="toggleSegmentFilter('${escapeHtml(e.segment)}')" style="${isActive?'background:rgba(124,58,237,.08);':''}">
+      <div class="seg-bar-row" onclick="toggleSegmentFilter('${escapeHtml(e.segment)}')" style="${isActive?'background:rgba(232,168,124,.10);':''}">
         <div class="seg-bar-label">${escapeHtml(e.segment)}${isActive?' ✓':''}</div>
         <div class="seg-bar-track">
-          <div class="seg-bar-fill" style="width:${widthPct}%;">฿${fmtTHB(e.sales)} · ${pct.toFixed(1)}%</div>
+          <div class="seg-bar-fill" style="width:${widthPct}%;">${e.outlets} outlets · ${pct.toFixed(1)}%</div>
         </div>
-        <div class="seg-bar-stats">${e.count} routes<br>RE ${e.avgRE.toFixed(2)} · PSS ${e.avgPSS.toFixed(0)}%</div>
+        <div class="seg-bar-stats">${e.count} routes<br>Strike ${e.avgStrike.toFixed(0)}% · ฿${fmtTHB(e.sales)}</div>
       </div>
     `;
   }).join('');
@@ -5789,22 +6370,25 @@ function renderShopTypeViz(){
 
   const groups = {};
   rows.forEach(r=>{
-    const s = r.shopType || 'Unknown';
-    if(!groups[s]) groups[s]={shopType:s, count:0, sales:0, cts:0, re:0, strike:0, pss:0, aeo:0};
-    groups[s].count++;
-    groups[s].sales+=r.sales;
-    groups[s].cts+=r.cts;
-    groups[s].re+=r.re;
-    groups[s].strike+=r.strike;
-    groups[s].pss+=r.pss;
-    groups[s].aeo+=r.aeo;
+    (r.outlets||[]).forEach(o=>{
+      const s = o.shopType || 'Unknown';
+      if(!groups[s]) groups[s]={shopType:s, outlets:0, routes:new Set(), monthlySales:0, strike:0, strikeCount:0};
+      groups[s].outlets++;
+      groups[s].routes.add(r.routeId);
+      groups[s].monthlySales+=(o.monthlySales||0);
+      groups[s].strike+=(o.strikeRate||0);
+      groups[s].strikeCount++;
+    });
   });
   const entries = Object.values(groups).map(g=>({
-    ...g,
-    avgRE:g.re/g.count,
-    avgStrike:g.strike/g.count,
-    avgPSS:g.pss/g.count,
-    avgAEO:g.aeo/g.count
+    shopType: g.shopType,
+    count: g.outlets, // outlet count for donut (better than route count)
+    routeCount: g.routes.size,
+    sales: g.monthlySales,
+    avgRE: 0,
+    avgStrike: g.strikeCount>0?g.strike/g.strikeCount:0,
+    avgPSS: 70 + (g.strikeCount>0?g.strike/g.strikeCount*0.1:0),
+    avgAEO: 75 + (g.strikeCount>0?g.strike/g.strikeCount*0.1:0)
   }));
   entries.sort((a,b)=>b.count - a.count);
 
@@ -5836,12 +6420,13 @@ function renderShopTypeViz(){
 
   // Custom legend (with click-to-filter)
   const fShop = document.getElementById('filterShopType')?.value || 'all';
+  const totalOutlets = entries.reduce((a,e)=>a+e.count, 0);
   const legendEl = document.getElementById('shopLegend');
   if(legendEl){
     legendEl.innerHTML = entries.map((e,i)=>{
-      const pct = (e.count/rows.length*100).toFixed(1);
+      const pct = totalOutlets>0 ? (e.count/totalOutlets*100).toFixed(1) : '0.0';
       const isActive = fShop === e.shopType;
-      return `<div class="shop-legend-row" onclick="toggleShopFilter('${escapeHtml(e.shopType)}')" style="cursor:pointer;${isActive?'background:rgba(5,150,105,.08);border-radius:5px;padding:3px 5px;':''}">
+      return `<div class="shop-legend-row" onclick="toggleShopFilter('${escapeHtml(e.shopType)}')" style="cursor:pointer;${isActive?'background:rgba(232,168,124,.10);border-radius:5px;padding:3px 5px;':''}">
         <span class="shop-legend-dot" style="background:${colors[i%colors.length]};"></span>
         <span class="shop-legend-label">${escapeHtml(e.shopType)}${isActive?' ✓':''}</span>
         <span class="shop-legend-val">${e.count} · ${pct}%</span>
@@ -5956,6 +6541,13 @@ const NAV_CONFIG = {
     hide: ['section-coverage','section-distributor','section-salesforce'],
     scrollTo: 'section-shoptype',
     render: renderShopTypeViz
+  },
+  'rs-coaching': {
+    title: 'RS Coaching Tracker',
+    sections: ['section-source','section-filters','section-rs-coaching','section-analysis'],
+    hide: ['section-coverage','section-distributor','section-salesforce'],
+    scrollTo: 'section-rs-coaching',
+    render: renderCoaching
   },
   'trend': {
     title: 'Trend Analysis',
@@ -6193,6 +6785,7 @@ function renderAll(){
   renderDensityHeatmap();
   renderSegmentationViz();
   renderShopTypeViz();
+  renderCoaching();
   renderActiveFilterChips();
   // Re-render conditional sections if currently visible
   if(document.getElementById('section-coverage') && document.getElementById('section-coverage').style.display !== 'none') renderCoverageMap();
