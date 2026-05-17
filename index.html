@@ -1008,6 +1008,43 @@ tbody tr:last-child td{border-bottom:none;}
   /* Rows - all 1 column */
   .row,.row-2,.row-2b,.row-3,.row-4,.row-2-1{grid-template-columns:1fr !important;}
   .row[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
+  /* Drill-Down section - mobile */
+  .drill-head{
+    flex-direction:column;
+    align-items:stretch !important;
+    gap:10px;
+    padding:11px 12px !important;
+  }
+  .drill-head > div:first-child{width:100%;}
+  .drill-head > div:last-child{
+    width:100%;
+    display:flex;
+    gap:6px;
+  }
+  .drill-head input[type="text"]#searchRoute{
+    width:auto !important;
+    flex:1;
+    min-width:0;
+    font-size:13px !important;
+  }
+  .drill-head select#sortBy{
+    flex:0 0 110px;
+    min-width:0;
+    font-size:11px !important;
+    padding:6px 22px 6px 8px !important;
+  }
+  .drill-body{padding:0 !important;}
+  .drill-mini-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:6px !important;
+    padding:10px !important;
+  }
+  .drill-mini{padding:8px 10px;}
+  .drill-mini-label{font-size:9.5px;}
+  .drill-mini-val{font-size:14px;}
+
+  /* Drill panel charts - force 1 column on mobile (override inline grid) */
+  #drillCharts{grid-template-columns:1fr !important;}
   .compare-grid{grid-template-columns:1fr 1fr;gap:6px;}
   .compare-cell{padding:8px 9px;}
   .compare-label{font-size:9.5px;}
@@ -1018,8 +1055,9 @@ tbody tr:last-child td{border-bottom:none;}
   canvas{max-height:240px !important;}
 
   /* Radar chart needs SQUARE aspect ratio on mobile - override */
-  #chartRadar{max-height:none !important;width:100% !important;height:auto !important;}
-  .chart-wrap:has(> #chartRadar){
+  #chartRadar, #drillChart2{max-height:none !important;width:100% !important;height:auto !important;}
+  .chart-wrap:has(> #chartRadar),
+  .chart-wrap:has(> #drillChart2){
     height:auto !important;
     aspect-ratio:1 / 1;
     min-height:280px;
@@ -1028,7 +1066,9 @@ tbody tr:last-child td{border-bottom:none;}
     overflow:hidden;
   }
   /* Fallback for browsers without :has() */
-  .card .chart-wrap > canvas#chartRadar{
+  .card .chart-wrap > canvas#chartRadar,
+  .card .chart-wrap > canvas#drillChart2,
+  .drill-card .chart-wrap > canvas#drillChart2{
     max-width:100%;
     width:100% !important;
     height:auto !important;
@@ -4187,7 +4227,13 @@ function openDrill(routeId){
   CHARTS.drill2 = new Chart(document.getElementById('drillChart2'),{
     type:'radar',
     data:{labels:['Coverage','SKU','Strike','PSS','AEO','VPO'],datasets:[{label:r.salesman,data:[r.coverage,r.sku,r.strike,r.pss,r.aeo,r.vpo*15],backgroundColor:'rgba(5,150,105,.15)',borderColor:'#059669',borderWidth:2,pointBackgroundColor:'#059669'},{label:'Target',data:[85,75,80,85,90,75],borderColor:'#f59e0b',borderDash:[4,4],pointRadius:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'KPI Profile vs Target',font:{family:'Space Grotesk',size:12}},legend:{position:'bottom',labels:{font:{size:10}}}},scales:{r:{suggestedMax:100}}}
+    options:{
+      responsive:true,
+      maintainAspectRatio: window.innerWidth <= 768 ? true : false,
+      aspectRatio: window.innerWidth <= 768 ? 1 : undefined,
+      plugins:{title:{display:true,text:'KPI Profile vs Target',font:{family:'Space Grotesk',size:12}},legend:{position:'bottom',labels:{font:{size:10}}}},
+      scales:{r:{suggestedMax:100,pointLabels:{font:{size:window.innerWidth<=768?10:11}}}}
+    }
   });
 
   // Analysis
