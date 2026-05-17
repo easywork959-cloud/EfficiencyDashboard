@@ -457,6 +457,16 @@ tbody tr:last-child td{border-bottom:none;}
 .heatmap-cell-val{font-family:var(--font-mono);font-weight:700;font-size:18px;line-height:1;}
 .heatmap-cell-routes{font-size:9.5px;font-weight:600;opacity:.85;margin-top:2px;}
 .heatmap-cell-sub{font-size:9px;font-weight:500;opacity:.75;text-align:center;line-height:1.25;}
+.hm-route-id{font-size:10px;font-weight:700;letter-spacing:.3px;opacity:.85;align-self:flex-start;}
+
+/* Compact route grid (8+ columns) */
+.heatmap-route-grid.compact .heatmap-cell{
+  padding:8px 5px 6px;
+  min-height:64px;
+}
+.heatmap-route-grid.compact .heatmap-cell-val{font-size:14px;}
+.heatmap-route-grid.compact .heatmap-cell-sub{font-size:8.5px;line-height:1.2;}
+.heatmap-route-grid.compact .hm-route-id{font-size:9px;}
 /* Color scale — 5 levels (soft pastel purple → muted dark) */
 .heatmap-cell.lvl-0{background:#fafaf9;color:#9ca3af;}
 .heatmap-cell.lvl-1{background:#f5f3ff;color:#7c3aed;}
@@ -1222,7 +1232,27 @@ tbody tr:last-child td{border-bottom:none;}
   .cstep-cell{padding:8px 6px;}
   .cstep-cell .cs-label{font-size:9.5px;min-height:30px;}
   .cstep-cell .cs-value{font-size:15px;}
-  .coaching-tab{font-size:10px !important;padding:5px 8px !important;}
+  .coaching-tab{font-size:10px !important;padding:5px 8px !important;flex-shrink:0;}
+
+  /* Coaching card-head: stack vertical on mobile + tabs scroll horizontally */
+  #section-rs-coaching .card-head{
+    flex-direction:column;
+    align-items:stretch !important;
+    gap:9px;
+  }
+  #section-rs-coaching .card-head > div:last-child{
+    display:flex !important;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    gap:5px !important;
+    padding-bottom:4px;
+    /* hide scrollbar for cleaner look */
+    scrollbar-width:none;
+  }
+  #section-rs-coaching .card-head > div:last-child::-webkit-scrollbar{display:none;}
+  #section-rs-coaching .card-head > div:last-child > span{
+    display:none; /* hide "View:" label on mobile to save space */
+  }
 
   /* RS leaderboard */
   .rs-leader-row{
@@ -1943,6 +1973,30 @@ tbody tr:last-child td{border-bottom:none;}
         <input type="file" id="fileUpload" accept=".csv,.xls,.xlsx,.pdf" multiple onchange="handleFileUpload(event)" title="เลือกได้หลายไฟล์พร้อมกัน (Ctrl/Cmd + click)" />
       </button>
 
+      <!-- Save/Load Data dropdown -->
+      <div class="template-dropdown-wrap" style="position:relative;">
+        <button class="btn btn-secondary" onclick="toggleSaveLoadMenu(event)" title="บันทึก/โหลดข้อมูล" style="background:linear-gradient(135deg,#f3e8ff,#e9d5ff);border-color:#9333ea;color:#6b21a8;font-weight:700;">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save/Load
+          <svg class="icon" viewBox="0 0 24 24" style="width:11px;height:11px;"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="export-dropdown" id="saveLoadDropdown" style="min-width:240px;">
+          <div style="padding:6px 12px;font-size:10px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);">💾 Browser Storage</div>
+          <button onclick="saveToLocalStorage();document.getElementById('saveLoadDropdown').classList.remove('show');">💾 Save to Browser <span class="ext">fast</span></button>
+          <button onclick="loadFromLocalStorage();document.getElementById('saveLoadDropdown').classList.remove('show');">📂 Load from Browser <span class="ext">auto</span></button>
+          <button onclick="clearLocalStorage();document.getElementById('saveLoadDropdown').classList.remove('show');">🗑️ Clear Browser Cache <span class="ext"></span></button>
+          <div style="height:1px;background:var(--line);margin:4px 0;"></div>
+          <div style="padding:6px 12px;font-size:10px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);">📦 Portable</div>
+          <button onclick="exportDashboardWithData();document.getElementById('saveLoadDropdown').classList.remove('show');">📤 Export Dashboard + Data <span class="ext">.html</span></button>
+          <button onclick="exportDataJSON();document.getElementById('saveLoadDropdown').classList.remove('show');">📥 Export Data Only <span class="ext">.json</span></button>
+          <button onclick="document.getElementById('importJsonFile').click();">📥 Import Data <span class="ext">.json</span></button>
+          <input type="file" id="importJsonFile" accept=".json" style="display:none;" onchange="importDataJSON(event)" />
+          <div style="height:1px;background:var(--line);margin:4px 0;"></div>
+          <div style="padding:6px 12px;font-size:10px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);">☁️ Cloud (Google Drive)</div>
+          <button onclick="showGDriveHelp();document.getElementById('saveLoadDropdown').classList.remove('show');">☁️ Setup Google Drive <span class="ext">guide</span></button>
+        </div>
+      </div>
+
       <div class="template-dropdown-wrap" style="position:relative;">
         <button class="btn btn-secondary" onclick="toggleTemplateMenu(event)" title="ดาวน์โหลด Template">
           <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
@@ -1951,7 +2005,8 @@ tbody tr:last-child td{border-bottom:none;}
         </button>
         <div class="export-dropdown" id="templateDropdown">
           <button onclick="downloadCriteriaTemplate();document.getElementById('templateDropdown').classList.remove('show');">🎯 Criteria Template <span class="ext">.xlsx</span></button>
-          <button onclick="downloadRoutesTemplate();document.getElementById('templateDropdown').classList.remove('show');">📊 Routes Data Template <span class="ext">.xlsx</span></button>
+          <button onclick="downloadRoutesTemplate('monthly');document.getElementById('templateDropdown').classList.remove('show');">📅 Monthly Template (1 เดือน) <span class="ext">.xlsx</span></button>
+          <button onclick="downloadRoutesTemplate('multi');document.getElementById('templateDropdown').classList.remove('show');">📊 Multi-Period Template (หลายเดือน) <span class="ext">.xlsx</span></button>
         </div>
       </div>
     </div>
@@ -5571,24 +5626,38 @@ async function handleSingleFile(file){
 }
 
 async function handleMultipleFiles(files){
-  toast(`กำลังโหลด ${files.length} ไฟล์...`,'info');
+  // Show progress modal
+  showUploadProgress(files.length);
+
   const results = [];
   const errors = [];
 
-  for(const file of files){
+  for(let i = 0; i < files.length; i++){
+    const file = files[i];
+    updateUploadProgress(i, files.length, `กำลังอ่าน ${file.name}...`);
     try {
       const parsed = await parseFileAsync(file);
-      if(parsed) results.push({file: file.name, ...parsed});
-      else errors.push(file.name);
+      if(parsed){
+        results.push({file: file.name, ...parsed});
+        updateUploadProgress(i+1, files.length, `✓ ${file.name} (${parsed.routes.length} routes)`);
+      } else {
+        errors.push(file.name);
+        updateUploadProgress(i+1, files.length, `✗ ${file.name} (Format ไม่ตรง)`);
+      }
     } catch(err){
       errors.push(`${file.name}: ${err.message}`);
+      updateUploadProgress(i+1, files.length, `✗ ${file.name} (${err.message})`);
     }
   }
 
   if(!results.length){
+    hideUploadProgress();
     toast('ไม่มีไฟล์ที่อ่านได้','error');
     return;
   }
+
+  updateUploadProgress(files.length, files.length, `กำลังรวมข้อมูล ${results.length} ไฟล์...`);
+  await new Promise(r=>setTimeout(r, 300));
 
   // Merge all routes from all files
   const merged = mergeRoutesData(results);
@@ -5605,6 +5674,8 @@ async function handleMultipleFiles(files){
 
   onLoadFromSource(`📊 รวม ${files.length} ไฟล์ · ${merged.routes.length} routes · ${periods.length} เดือน (${periodRange})`);
 
+  hideUploadProgress();
+
   let msg = `✓ Merged: ${files.length} ไฟล์ · ${merged.routes.length} routes · ${periods.length} เดือน`;
   if(merged.outletsCount) msg += ` · ${merged.outletsCount} outlets`;
   if(merged.coachingCount) msg += ` · ${merged.coachingCount} coaching sessions`;
@@ -5612,6 +5683,79 @@ async function handleMultipleFiles(files){
 
   if(errors.length){
     setTimeout(()=>toast(`⚠️ ${errors.length} ไฟล์ที่อ่านไม่ได้: ${errors.slice(0,2).join(', ')}${errors.length>2?'...':''}`, 'warn'), 1500);
+  }
+}
+
+// ============ UPLOAD PROGRESS UI ============
+function showUploadProgress(total){
+  let modal = document.getElementById('uploadProgressModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'uploadProgressModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+      <div style="background:var(--surface);border-radius:14px;padding:24px 28px;max-width:480px;width:90%;box-shadow:0 25px 50px -12px rgba(0,0,0,.25);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="font-size:24px;animation:ai-thinking 1.5s ease-in-out infinite;">📤</div>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--ink);">กำลัง Upload และ Merge ไฟล์</div>
+            <div style="font-size:11px;color:var(--ink-soft);" id="uploadProgressSubtitle">เตรียมพร้อม...</div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div style="background:var(--bg-soft);border-radius:8px;height:10px;overflow:hidden;margin-bottom:6px;">
+          <div id="uploadProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1d4ed8,#3b82f6);transition:width .3s;border-radius:8px;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-soft);margin-bottom:14px;">
+          <span id="uploadProgressCount">0 / ${total}</span>
+          <span id="uploadProgressPct">0%</span>
+        </div>
+
+        <!-- File log -->
+        <div id="uploadProgressLog" style="background:var(--bg-soft);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:11px;max-height:200px;overflow-y:auto;color:var(--ink-2);"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.classList.add('show');
+  modal.style.display = 'flex';
+  document.getElementById('uploadProgressLog').innerHTML = '';
+  document.getElementById('uploadProgressBar').style.width = '0%';
+  document.getElementById('uploadProgressCount').textContent = `0 / ${total}`;
+  document.getElementById('uploadProgressPct').textContent = '0%';
+  document.body.style.overflow = 'hidden';
+}
+
+function updateUploadProgress(current, total, message){
+  const pct = total > 0 ? Math.round((current/total)*100) : 0;
+  const bar = document.getElementById('uploadProgressBar');
+  const cnt = document.getElementById('uploadProgressCount');
+  const pctEl = document.getElementById('uploadProgressPct');
+  const sub = document.getElementById('uploadProgressSubtitle');
+  const log = document.getElementById('uploadProgressLog');
+  if(bar) bar.style.width = pct + '%';
+  if(cnt) cnt.textContent = `${current} / ${total}`;
+  if(pctEl) pctEl.textContent = pct + '%';
+  if(sub) sub.textContent = message;
+  if(log && message){
+    const line = document.createElement('div');
+    line.style.cssText = 'padding:2px 0;';
+    line.textContent = message;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function hideUploadProgress(){
+  const modal = document.getElementById('uploadProgressModal');
+  if(modal){
+    setTimeout(()=>{
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }, 500);
   }
 }
 
@@ -6416,16 +6560,22 @@ function downloadCriteriaTemplate(){
   toast('Download Criteria Template สำเร็จ','success');
 }
 
-// สร้าง Routes Data Template Excel (Long format: 1 row = 1 route × 1 month)
-function downloadRoutesTemplate(){
+// สร้าง Routes Data Template Excel
+// mode = 'monthly' → 1 เดือนต่อไฟล์ (เหมาะกับการ Upload รายเดือนแล้ว merge)
+// mode = 'multi'   → หลายเดือนใน 1 ไฟล์ (default, เหมาะกับ historical batch)
+function downloadRoutesTemplate(mode){
   if(typeof XLSX === 'undefined'){toast('Excel library ยังไม่โหลด','error');return;}
+  mode = mode || 'multi';
 
   const wb = XLSX.utils.book_new();
+  const isMonthly = mode === 'monthly';
+
+  // Period(s) to include
+  const periods = isMonthly ? ['2026-02'] : ['2025-12','2026-01','2026-02'];
+  const currentMonth = periods[periods.length-1];
 
   // ============================================================
   // SHEET 1: Routes (Route × Month — Time-series KPIs)
-  // 1 row = 1 route × 1 month (no per-outlet detail here)
-  // Province/Segment/ShopType จะอ้างจากใน Outlets sheet
   // ============================================================
   const routeHeaders = [
     'Period','Route ID','Salesman','RS','ASM','Distributor','Region','Visit Pattern','Frequency','Sales Type Default',
@@ -6435,16 +6585,16 @@ function downloadRoutesTemplate(){
   ];
 
   const routeRows = [];
-  // Route R0001 × 3 months
-  ['2025-12','2026-01','2026-02'].forEach((p,i)=>{
+  // Route R0001 × periods
+  periods.forEach((p,i)=>{
     routeRows.push([
       p,'R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','NOR','Daily-D','F1','Secondary',
       420000+i*15000, 52000+i*1500, 410+i*5, 720+i*5, 575+i*3, 91.2+i*0.4, 95.8+i*0.2, 71+i*0.5, 4.1+i*0.05,
       1820+i*15, 5.3+i*0.05, 81.2+i*0.6, 77.8+i*0.3, 87.9+i*0.4, 9300+i*100, 2350+i*25, 220, 180000+i*2000
     ]);
   });
-  // Route R0002 × 3 months
-  ['2025-12','2026-01','2026-02'].forEach((p,i)=>{
+  // Route R0002 × periods
+  periods.forEach((p,i)=>{
     routeRows.push([
       p,'R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','NOE','Weekly W1','F2','Secondary',
       365000+i*7500, 46500+i*750, 278+i*3, 490+i*2, 408+i*1, 87.5+i*0.4, 91.2+i*0.3, 63+i*1, 3.75+i*0.03,
@@ -6460,9 +6610,8 @@ function downloadRoutesTemplate(){
     {wch:9},{wch:11},{wch:10},{wch:11}
   ];
   routeSheet['!freeze'] = {xSplit:2, ySplit:1};
-  // Number format
   for(let r=1;r<=routeRows.length;r++){
-    [10,11,19,24,27].forEach(c=>{ // Sales, CTS, Drop, Fuel, Population
+    [10,11,19,24,27].forEach(c=>{
       const a = XLSX.utils.encode_cell({r,c});
       if(routeSheet[a]) routeSheet[a].z = '#,##0';
     });
@@ -6520,38 +6669,18 @@ function downloadRoutesTemplate(){
   ];
 
   const coachRows = [];
-  // อนุชา 11 coach สมหมาย 01 (R0001) 3 ครั้ง
-  coachRows.push([
-    '2025-12-15','2025-12','อนุชา 11','สมหมาย 01','R0001','Field Coaching',120,
-    2.5,2.7,2.4,2.6,2.3,2.5,2.6,2.5,
-    'Sales presentation ดีขึ้นมาก ขาดเรื่อง stocktake','Monitor 2 สัปดาห์'
-  ]);
-  coachRows.push([
-    '2026-01-18','2026-01','อนุชา 11','สมหมาย 01','R0001','Field Coaching',150,
-    2.7,2.8,2.6,2.7,2.4,2.6,2.7,2.6,
-    'พัฒนาทุกด้าน Merchandising ยังต้องปรับ','ปกติ'
-  ]);
-  coachRows.push([
-    '2026-02-12','2026-02','อนุชา 11','สมหมาย 01','R0001','Classroom',90,
-    2.8,2.9,2.7,2.8,2.6,2.7,2.8,2.8,
-    'Top performer รักษามาตรฐาน','ปกติ'
-  ]);
-  // สมศักดิ์ 12 coach วุฒิ 02 (R0002)
-  coachRows.push([
-    '2025-12-20','2025-12','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',180,
-    1.8,2.0,1.7,1.9,1.6,1.8,2.0,1.8,
-    'ต้องพัฒนา Presentation และ Merchandising','Re-coaching เดือนหน้า'
-  ]);
-  coachRows.push([
-    '2026-01-22','2026-01','สมศักดิ์ 12','วุฒิ 02','R0002','One-on-One Review',60,
-    2.0,2.2,1.9,2.0,1.8,2.0,2.1,2.0,
-    'เริ่มดีขึ้น ต้องฝึก stocktake ให้ละเอียดขึ้น','Monitor 2 สัปดาห์'
-  ]);
-  coachRows.push([
-    '2026-02-25','2026-02','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',135,
-    2.2,2.3,2.1,2.2,2.0,2.1,2.3,2.2,
-    'พัฒนาขึ้นเรื่อยๆ','ปกติ'
-  ]);
+  const coachData = [
+    ['2025-12-15','2025-12','อนุชา 11','สมหมาย 01','R0001','Field Coaching',120, 2.5,2.7,2.4,2.6,2.3,2.5,2.6,2.5, 'Sales presentation ดีขึ้นมาก ขาดเรื่อง stocktake','Monitor 2 สัปดาห์'],
+    ['2026-01-18','2026-01','อนุชา 11','สมหมาย 01','R0001','Field Coaching',150, 2.7,2.8,2.6,2.7,2.4,2.6,2.7,2.6, 'พัฒนาทุกด้าน Merchandising ยังต้องปรับ','ปกติ'],
+    ['2026-02-12','2026-02','อนุชา 11','สมหมาย 01','R0001','Classroom',90, 2.8,2.9,2.7,2.8,2.6,2.7,2.8,2.8, 'Top performer รักษามาตรฐาน','ปกติ'],
+    ['2025-12-20','2025-12','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',180, 1.8,2.0,1.7,1.9,1.6,1.8,2.0,1.8, 'ต้องพัฒนา Presentation และ Merchandising','Re-coaching เดือนหน้า'],
+    ['2026-01-22','2026-01','สมศักดิ์ 12','วุฒิ 02','R0002','One-on-One Review',60, 2.0,2.2,1.9,2.0,1.8,2.0,2.1,2.0, 'เริ่มดีขึ้น ต้องฝึก stocktake ให้ละเอียดขึ้น','Monitor 2 สัปดาห์'],
+    ['2026-02-25','2026-02','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',135, 2.2,2.3,2.1,2.2,2.0,2.1,2.3,2.2, 'พัฒนาขึ้นเรื่อยๆ','ปกติ']
+  ];
+  // For monthly mode, include only sessions in selected periods
+  coachData.forEach(row=>{
+    if(periods.includes(row[1])) coachRows.push(row);
+  });
 
   const coachSheet = XLSX.utils.aoa_to_sheet([coachHeaders, ...coachRows]);
   coachSheet['!cols'] = [
@@ -6565,17 +6694,62 @@ function downloadRoutesTemplate(){
   // ============================================================
   // SHEET 4: Instructions
   // ============================================================
-  const inst = [
-    ['ROUTES DATA TEMPLATE — Multi-Sheet (Routes / Outlets / Coaching)'],
+  const modeTitle = isMonthly
+    ? `MONTHLY TEMPLATE — ${currentMonth} (1 เดือน)`
+    : 'MULTI-PERIOD TEMPLATE — หลายเดือนใน 1 ไฟล์';
+
+  const monthlyHints = isMonthly ? [
+    ['============================================================'],
+    ['📅 Monthly Mode — 1 ไฟล์ = 1 เดือน'],
+    ['============================================================'],
     [''],
+    ['Template นี้ออกแบบสำหรับใช้รายเดือน:'],
+    [`• Period ในไฟล์นี้ = ${currentMonth} (เปลี่ยนเป็นเดือนของคุณ)`],
+    ['• ทุก row ใน Sheet Routes ใช้ Period เดียวกัน'],
+    ['• Coaching sessions เฉพาะของเดือนนี้'],
+    [''],
+    ['📌 Workflow แนะนำ:'],
+    ['1. ทำไฟล์ใหม่ทุกเดือน (copy template แล้วเปลี่ยน Period)'],
+    ['2. ตั้งชื่อไฟล์ตามเดือน เช่น Route_2026-02.xlsx (จะตั้งชื่ออื่นก็ได้ ระบบไม่อ่านชื่อไฟล์)'],
+    ['3. Upload ทีละไฟล์ → ระบบจะถาม "Merge หรือ Replace"'],
+    ['   • เลือก Merge → เพิ่มข้อมูลเดือนใหม่เข้าไปกับเดือนเก่า'],
+    ['   • หรือ Upload หลายไฟล์พร้อมกัน → ระบบ merge ให้อัตโนมัติ'],
+    [''],
+    ['🔑 Key สำคัญในการ Merge:'],
+    ['• Route ID — ใช้ระบุ route เดียวกันข้ามเดือน (ต้องตรงกัน case-sensitive)'],
+    ['• Period (YYYY-MM) — ใช้ระบุเดือนของข้อมูล'],
+    ['• Outlet ID — ใช้ระบุร้านเดียวกันข้ามเดือน'],
+    [''],
+    ['💡 ตัวอย่าง: Upload ทั้ง 12 ไฟล์ของปี → ได้ Trend 12 เดือนทันที'],
+    [''],
+  ] : [
+    ['============================================================'],
+    ['📊 Multi-Period Mode — หลายเดือนใน 1 ไฟล์'],
+    ['============================================================'],
+    [''],
+    ['Template นี้เหมาะกับ:'],
+    ['• ข้อมูลย้อนหลัง (historical batch upload)'],
+    ['• Bulk import ครั้งเดียว'],
+    [''],
+    ['📌 Workflow:'],
+    ['1. ใส่ทุกเดือนใน Sheet Routes (1 row = 1 route × 1 เดือน)'],
+    ['2. Outlets ใช้ Master List ปัจจุบัน (ไม่ต้อง×เดือน)'],
+    ['3. Coaching ใส่ทุก session ใน 1 sheet'],
+    [''],
+  ];
+
+  const inst = [
+    [modeTitle],
+    [''],
+    ...monthlyHints,
     ['============================================================'],
     ['📋 โครงสร้าง 3 Sheets'],
     ['============================================================'],
     [''],
     ['Sheet "Routes" — KPI รายเดือน ระดับ Route'],
     ['• 1 row = 1 Route × 1 เดือน (Long format)'],
-    ['• Route ID เดียวกัน มีหลาย rows ถ้ามีข้อมูลหลายเดือน'],
-    ['• Province/Segment/Shop Type ของ outlets ในแต่ละ route อยู่ที่ Sheet "Outlets"'],
+    isMonthly ? '• Monthly Template: ทุก row ใช้ Period เดียวกัน (= เดือนของไฟล์)' : ['• Route ID เดียวกัน มีหลาย rows ถ้ามีข้อมูลหลายเดือน'],
+    ['• Province/Segment/Shop Type ของ outlets อยู่ที่ Sheet "Outlets"'],
     ['• ใส่เฉพาะ KPI รวมต่อเดือน: Sales, CTS, Active Stores, Strike Rate ฯลฯ'],
     [''],
     ['Sheet "Outlets" — Master data ระดับร้าน (Outlet)'],
@@ -6583,6 +6757,7 @@ function downloadRoutesTemplate(){
     ['• Outlet ผูกกับ Route ผ่าน "Route ID"'],
     ['• 1 Route สามารถมี outlets หลายร้านในต่างจังหวัด/อำเภอ/segment/shoptype'],
     ['• Sale Type ต่อร้าน: Credit / Presales / Cash'],
+    ['• Monthly Mode: ใส่ snapshot ของเดือนนี้ (Monthly Sales ของเดือน)'],
     [''],
     ['Sheet "Coaching" — บันทึก Coaching session'],
     ['• 1 row = 1 Coaching session ของ RS ที่เข้าสอน Salesman'],
@@ -6599,7 +6774,7 @@ function downloadRoutesTemplate(){
     ['Region — NOR / NOE / BKKCT / SOU'],
     ['Visit Pattern — Daily-D / Weekly W1 / Bi-Weekly / Monthly / Van Sales / Wholesale Direct / Tele-Sales'],
     ['Frequency — F1 / F2 / F3 / F4 (สำหรับ Band-Weighted formula)'],
-    ['Sales Type Default — Primary / Secondary / Tertiary (ถ้าทุก outlet ในเส้นทางเป็นแบบเดียวกัน)'],
+    ['Sales Type Default — Primary / Secondary / Tertiary'],
     ['Sales (฿) — ยอดขายรายเดือน ตัวเลขล้วน ไม่ใส่ ฿/comma'],
     ['CTS (฿) — Cost-to-Serve รายเดือน'],
     ['Active Stores — จำนวนร้านที่ขายจริง'],
@@ -6613,35 +6788,27 @@ function downloadRoutesTemplate(){
     ['🏪 Sheet "Outlets" — Field Definitions'],
     ['============================================================'],
     [''],
-    ['Outlet ID (Mandatory) — รหัส unique ของแต่ละร้าน (Customer Code จาก SAP/ERP)'],
+    ['Outlet ID (Mandatory) — รหัส unique ของแต่ละร้าน'],
     ['Route ID (Mandatory) — ผูกกับ Route ในsheet Routes (ต้องตรงกัน)'],
     ['Customer Name — ชื่อร้าน'],
-    ['Province — จังหวัด เช่น เชียงใหม่, ขอนแก่น, ภูเก็ต (ภาษาไทย)'],
+    ['Province — จังหวัด (ภาษาไทย เช่น เชียงใหม่, ขอนแก่น)'],
     ['District (อำเภอ) — อำเภอ/เขต ที่ร้านตั้งอยู่'],
     ['Segmentation — Premium / Mid-tier / Mass / Value (หรือชื่ออื่นตาม taxonomy)'],
-    ['Shop Type — Traditional Trade / Modern Trade / Mini-Mart / Wholesale / Horeca / Specialty'],
+    ['Shop Type — WHC / RTL / LMT / WAP / MNT / TRD / AGC ฯลฯ (รวม OWS/OTR/HOS/OPM/OTH/OCH → OTC)'],
     ['Sale Type — Credit / Presales / Cash'],
-    ['  • Credit = ขายเงินเชื่อ (สั่ง Sales Order)'],
-    ['  • Presales = สั่งล่วงหน้า (พรีออร์เดอร์)'],
-    ['  • Cash = Cash Sales Order (ขายสด)'],
     ['Latitude, Longitude — พิกัด GPS ของร้าน (ใช้สำหรับ map view)'],
-    ['Monthly Sales (฿) — ยอดขายเฉลี่ยต่อเดือนของร้านนี้'],
+    ['Monthly Sales (฿) — ยอดขายของร้านในเดือนนี้'],
     ['Visit Frequency — จำนวนครั้งที่เข้าเยี่ยมต่อเดือน'],
     ['Strike Rate % — % การปิดการขายต่อการเยี่ยม (0-100)'],
     ['Status — Active / Inactive / On Hold'],
-    [''],
-    ['💡 ตัวอย่าง: 1 salesman ดูแล 200 outlets ใน 3 จังหวัด, 5 อำเภอ, 4 segment, 6 shop types'],
-    ['  → ต้องใส่ 200 rows ใน sheet Outlets ทั้งหมด ผูกกับ Route ID เดียวกัน'],
-    ['  → Dashboard จะ aggregate Province/Segment/Shop Type/Sale Type จาก outlets เหล่านี้'],
     [''],
     ['============================================================'],
     ['👥 Sheet "Coaching" — Field Definitions'],
     ['============================================================'],
     [''],
-    ['Coaching Date (Mandatory) — YYYY-MM-DD (วันที่ RS เข้า coach)'],
-    ['Period — YYYY-MM (เดือนที่ coaching อยู่ใน)'],
-    ['RS Name (Mandatory) — ชื่อ RS ที่เข้า coach'],
-    ['Salesman (Mandatory) — ชื่อ Salesman ที่ถูก coach'],
+    ['Coaching Date (Mandatory) — YYYY-MM-DD'],
+    ['Period — YYYY-MM (เดือนที่ session อยู่ใน)'],
+    ['RS Name, Salesman (Mandatory) — ชื่อ RS และ Salesman'],
     ['Route ID — ผูกกับ Route (optional แต่แนะนำให้ใส่)'],
     ['Session Type — Field Coaching / Classroom / One-on-One Review'],
     ['Duration (min) — ระยะเวลา session (นาที)'],
@@ -6665,11 +6832,6 @@ function downloadRoutesTemplate(){
     [''],
     ['Routes.Route ID  ←→  Outlets.Route ID  ←→  Coaching.Route ID'],
     [''],
-    ['ตัวอย่าง Route R0001:'],
-    ['• Sheet Routes: 3 rows (2025-12, 2026-01, 2026-02 — KPI รวมต่อเดือน)'],
-    ['• Sheet Outlets: 7 rows (outlets 7 ร้านที่ Route R0001 ดูแล)'],
-    ['• Sheet Coaching: 3 rows (coaching 3 ครั้ง ของ RS อนุชา 11 สอน สมหมาย 01)'],
-    [''],
     ['📊 Dashboard จะใช้ทั้ง 3 sheets:'],
     ['• KPI Cards / Trend / Matrix → จาก Routes'],
     ['• Density Heatmap / Segmentation / Shop Type → aggregate จาก Outlets'],
@@ -6678,31 +6840,416 @@ function downloadRoutesTemplate(){
     ['• RS Coaching page → จาก Coaching'],
     [''],
     ['============================================================'],
-    ['📤 Workflow ที่แนะนำ'],
+    ['📤 Upload Workflow'],
     ['============================================================'],
     [''],
-    ['1. Export 3 ไฟล์จาก SAP/HH Transaction/Daily Dashboard:'],
-    ['   • Route KPI report → ใส่ใน sheet "Routes"'],
-    ['   • Customer Master + GPS → ใส่ใน sheet "Outlets"'],
-    ['   • 6-step Coaching Score → ใส่ใน sheet "Coaching"'],
-    ['2. รวม 3 sheets ในไฟล์เดียว Save เป็น .xlsx'],
-    ['3. Upload ใน Dashboard → ระบบจะอ่านทั้ง 3 sheets อัตโนมัติ'],
+    isMonthly ? '🔄 Monthly Workflow (แนะนำสำหรับการใช้งานต่อเนื่อง):' : '📦 Multi-Period Workflow:',
     [''],
-    ['💡 ถ้าไม่มีข้อมูล Outlets/Coaching ก็ยังใช้ได้ — ระบบจะใช้แค่ Routes sheet'],
-    ['   แต่ filter Province/Segment/Shop Type จะอ้างจาก default ของ Route แทน'],
+    ...(isMonthly ? [
+      ['Option A: Upload หลายเดือนพร้อมกัน'],
+      ['1. ทำไฟล์ทุกเดือน (Route_2025-01.xlsx, Route_2025-02.xlsx, …)'],
+      ['2. กด Upload → เลือกหลายไฟล์พร้อมกัน (Ctrl/Cmd + Click)'],
+      ['3. ระบบ Merge อัตโนมัติ — ได้ Trend หลายเดือนใน Dashboard'],
+      [''],
+      ['Option B: Upload ทีละไฟล์ (Sequential)'],
+      ['1. Upload ไฟล์ที่ 1 → ระบบโหลดปกติ'],
+      ['2. Upload ไฟล์ที่ 2 → มี dialog ถาม Merge/Replace'],
+      ['   • OK = Merge (เก็บข้อมูลเก่า + เพิ่มเดือนใหม่)'],
+      ['   • Cancel = Replace (ทับของเก่า)'],
+      ['3. ทำซ้ำสำหรับเดือนถัดไป'],
+      [''],
+      ['🔑 Merge Logic:'],
+      ['• Routes — Match by Route ID; History merge by Period'],
+      ['• Outlets — Match by Outlet ID; Union (latest wins on dup)'],
+      ['• Coaching — Match by Date+RS+Salesman; Union'],
+    ] : [
+      ['1. ใส่ทุกข้อมูลในไฟล์เดียว'],
+      ['2. Upload ครั้งเดียว — ได้ข้อมูลทั้งหมดทันที'],
+    ]),
     [''],
     ['⚠️ ข้อควรระวัง'],
     ['• Route ID ต้องเหมือนกันทุก sheet (case-sensitive)'],
-    ['• Period ใน Routes / Coaching ต้องเป็น YYYY-MM ไม่ใช่ format อื่น'],
+    ['• Period ต้องเป็น YYYY-MM (เช่น 2026-02) ไม่ใช่ format อื่น'],
     ['• Coaching Date ต้องเป็น YYYY-MM-DD'],
     ['• ตัวเลขห้ามใส่ comma หรือสัญลักษณ์ ฿/%'],
+    ['• ระบบไม่อ่านชื่อไฟล์ — อ่าน Period จาก column ใน Sheet "Routes"'],
   ];
-  const ws2 = XLSX.utils.aoa_to_sheet(inst);
+  // Flatten any sub-arrays
+  const flatInst = inst.map(r => Array.isArray(r) ? r : [r]);
+  const ws2 = XLSX.utils.aoa_to_sheet(flatInst);
   ws2['!cols'] = [{wch:90}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Instructions');
 
-  XLSX.writeFile(wb, 'Route_Efficiency_Template_v2.xlsx');
-  toast('Download Template (3 sheets: Routes + Outlets + Coaching)','success');
+  const filename = isMonthly
+    ? `Route_Efficiency_Template_${currentMonth}.xlsx`
+    : 'Route_Efficiency_Template_v2.xlsx';
+  XLSX.writeFile(wb, filename);
+  toast(
+    isMonthly
+      ? `Download Monthly Template (${currentMonth}) · 3 sheets`
+      : 'Download Multi-Period Template · 3 sheets · 3 เดือน',
+    'success'
+  );
+}
+
+// ==================== SAVE / LOAD DATA ====================
+
+function toggleSaveLoadMenu(e){
+  e?.stopPropagation();
+  const dd = document.getElementById('saveLoadDropdown');
+  dd.classList.toggle('show');
+  // Close others
+  ['exportDropdown','templateDropdown'].forEach(id=>{
+    const x = document.getElementById(id);
+    if(x) x.classList.remove('show');
+  });
+}
+
+// ============ IndexedDB Helper (supports much larger data than localStorage) ============
+const IDB_NAME = 'RouteEffDB';
+const IDB_STORE = 'data';
+const IDB_KEY = 'main';
+
+function openIDB(){
+  return new Promise((resolve, reject) => {
+    if(!window.indexedDB){ reject(new Error('Browser ไม่รองรับ IndexedDB')); return; }
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)){
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function idbSet(payload){
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.put(payload, IDB_KEY);
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function idbGet(){
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.get(IDB_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+async function idbDelete(){
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.delete(IDB_KEY);
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+// Light meta stays in localStorage (only ~200 bytes) for fast banner check
+const STORAGE_META_KEY = 'route_eff_meta_v2';
+
+// ============ Option A: Browser Storage (IndexedDB) ============
+async function saveToLocalStorage(){
+  if(!DATA || !DATA.length){
+    toast('ไม่มีข้อมูลให้บันทึก','warn');
+    return;
+  }
+
+  // Show progress for large saves
+  const sizeEstimate = JSON.stringify(DATA).length;
+  const sizeMB = (sizeEstimate / 1024 / 1024).toFixed(2);
+
+  if(sizeEstimate > 50 * 1024 * 1024){
+    if(!confirm(`ข้อมูลใหญ่มาก (${sizeMB} MB) — อาจใช้เวลาบันทึก ดำเนินการต่อ?`)) return;
+  }
+
+  toast(`กำลังบันทึก ${sizeMB} MB ใน Browser...`, 'info');
+
+  try {
+    const payload = {
+      version: 2,
+      savedAt: new Date().toISOString(),
+      routesCount: DATA.length,
+      periods: DATA._periods || [],
+      data: DATA,
+      criteria: typeof CRITERIA !== 'undefined' ? CRITERIA : null,
+      radarTargets: typeof RADAR_TARGETS !== 'undefined' ? RADAR_TARGETS : null
+    };
+
+    await idbSet(payload);
+
+    // Save tiny meta for banner check
+    localStorage.setItem(STORAGE_META_KEY, JSON.stringify({
+      savedAt: payload.savedAt,
+      routesCount: payload.routesCount,
+      periods: payload.periods,
+      sizeMB
+    }));
+
+    toast(`✓ บันทึก ${DATA.length} routes (${sizeMB} MB) ใน Browser แล้ว — เปิดมาครั้งหน้าโหลดได้เลย`, 'success');
+  } catch(err){
+    if(err.name === 'QuotaExceededError' || err.message?.includes('quota')){
+      toast(`❌ Browser เต็ม (ข้อมูล ${sizeMB} MB) — ใช้ "Export Data .json" หรือ "Export Dashboard + Data .html" แทน`, 'error');
+    } else {
+      toast('❌ บันทึกไม่สำเร็จ: '+err.message, 'error');
+    }
+    console.error('saveToLocalStorage error:', err);
+  }
+}
+
+async function loadFromLocalStorage(){
+  try {
+    toast('กำลังโหลดจาก Browser...', 'info');
+    const payload = await idbGet();
+    if(!payload){
+      toast('ไม่มีข้อมูลที่บันทึกไว้ใน Browser','warn');
+      return;
+    }
+    if(!payload.data || !Array.isArray(payload.data)){
+      toast('ข้อมูลใน Browser เสียหาย','error');
+      return;
+    }
+
+    // Restore criteria + radar targets if present
+    if(payload.criteria && typeof CRITERIA !== 'undefined'){
+      Object.assign(CRITERIA, payload.criteria);
+    }
+    if(payload.radarTargets && typeof RADAR_TARGETS !== 'undefined'){
+      RADAR_TARGETS = payload.radarTargets;
+    }
+
+    DATA = payload.data;
+    DATA._periods = payload.periods || [];
+
+    const savedDate = new Date(payload.savedAt);
+    const ago = formatTimeAgo(savedDate);
+    onLoadFromSource(`💾 โหลดจาก Browser · ${payload.routesCount} routes · ${(payload.periods||[]).length} เดือน · บันทึก ${ago}`);
+    toast(`✓ โหลดข้อมูลจาก Browser สำเร็จ (${payload.routesCount} routes · บันทึก ${ago})`, 'success');
+  } catch(err){
+    toast('❌ โหลดไม่สำเร็จ: '+err.message, 'error');
+    console.error('loadFromLocalStorage error:', err);
+  }
+}
+
+async function clearLocalStorage(){
+  if(!confirm('ลบข้อมูลที่บันทึกใน Browser? (ข้อมูลปัจจุบันใน Dashboard ไม่กระทบ)')) return;
+  try {
+    await idbDelete();
+    localStorage.removeItem(STORAGE_META_KEY);
+    toast('ลบข้อมูลใน Browser แล้ว','success');
+  } catch(err){
+    toast('❌ ลบไม่สำเร็จ: '+err.message,'error');
+  }
+}
+
+// Auto-load on startup if data exists in localStorage
+function tryAutoLoadOnStartup(){
+  try {
+    const meta = localStorage.getItem(STORAGE_META_KEY);
+    if(!meta) return false;
+    const m = JSON.parse(meta);
+    const ago = formatTimeAgo(new Date(m.savedAt));
+    // Show a non-blocking banner instead of auto-load
+    showAutoLoadBanner(m, ago);
+    return true;
+  } catch(e){ return false; }
+}
+
+function showAutoLoadBanner(meta, ago){
+  // Check if banner already exists
+  if(document.getElementById('autoLoadBanner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'autoLoadBanner';
+  banner.style.cssText = `
+    position:fixed;top:20px;left:50%;transform:translateX(-50%);
+    z-index:9000;background:linear-gradient(135deg,#f3e8ff,#e9d5ff);
+    border:1px solid #9333ea;border-radius:11px;padding:13px 18px;
+    box-shadow:0 10px 25px -5px rgba(0,0,0,.15);
+    display:flex;align-items:center;gap:14px;max-width:560px;width:90%;
+    font-family:Sarabun,sans-serif;font-size:12.5px;color:#581c87;
+  `;
+  banner.innerHTML = `
+    <div style="font-size:22px;">💾</div>
+    <div style="flex:1;">
+      <div style="font-weight:700;margin-bottom:2px;">มีข้อมูลที่บันทึกไว้ใน Browser</div>
+      <div style="font-size:11px;color:#6b21a8;opacity:.9;">${meta.routesCount} routes · ${(meta.periods||[]).length} เดือน${meta.sizeMB ? ` · ${meta.sizeMB} MB`:''} · บันทึก ${ago}</div>
+    </div>
+    <button onclick="loadFromLocalStorage(); document.getElementById('autoLoadBanner').remove();" style="padding:6px 14px;background:#9333ea;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:11.5px;cursor:pointer;">📂 โหลด</button>
+    <button onclick="document.getElementById('autoLoadBanner').remove();" style="padding:6px 10px;background:transparent;border:none;color:#6b21a8;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+  `;
+  document.body.appendChild(banner);
+  // Auto-dismiss after 15 sec
+  setTimeout(()=>{
+    const b = document.getElementById('autoLoadBanner');
+    if(b) b.remove();
+  }, 15000);
+}
+
+function formatTimeAgo(date){
+  const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if(sec < 60) return `${sec} วินาทีที่แล้ว`;
+  if(sec < 3600) return `${Math.floor(sec/60)} นาทีที่แล้ว`;
+  if(sec < 86400) return `${Math.floor(sec/3600)} ชั่วโมงที่แล้ว`;
+  const days = Math.floor(sec/86400);
+  if(days < 30) return `${days} วันที่แล้ว`;
+  return date.toLocaleDateString('th-TH');
+}
+
+// ============ Option B: Export Data as JSON ============
+function exportDataJSON(){
+  if(!DATA || !DATA.length){toast('ไม่มีข้อมูลให้ export','warn');return;}
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    routesCount: DATA.length,
+    periods: DATA._periods || [],
+    data: DATA,
+    criteria: typeof CRITERIA !== 'undefined' ? CRITERIA : null,
+    radarTargets: typeof RADAR_TARGETS !== 'undefined' ? RADAR_TARGETS : null
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().substring(0,10);
+  a.href = url;
+  a.download = `route_efficiency_data_${ts}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`✓ Export Data: ${DATA.length} routes (.json)`,'success');
+}
+
+function importDataJSON(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  event.target.value = ''; // reset
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try {
+      const payload = JSON.parse(e.target.result);
+      if(!payload.data || !Array.isArray(payload.data)){
+        toast('ไฟล์ JSON ไม่ใช่รูปแบบที่รองรับ','error');
+        return;
+      }
+      if(payload.criteria && typeof CRITERIA !== 'undefined') Object.assign(CRITERIA, payload.criteria);
+      if(payload.radarTargets && typeof RADAR_TARGETS !== 'undefined') RADAR_TARGETS = payload.radarTargets;
+      DATA = payload.data;
+      DATA._periods = payload.periods || [];
+      onLoadFromSource(`📥 Import: ${file.name} · ${DATA.length} routes · ${(payload.periods||[]).length} เดือน`);
+      toast(`✓ Import สำเร็จ: ${DATA.length} routes`,'success');
+    } catch(err){
+      toast('❌ Import ไม่สำเร็จ: '+err.message,'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ============ Option C: Export Dashboard + Data (Standalone HTML) ============
+async function exportDashboardWithData(){
+  if(!DATA || !DATA.length){toast('ไม่มีข้อมูลให้ export','warn');return;}
+  try {
+    toast('กำลังสร้าง standalone HTML...', 'info');
+    // Get the current page HTML
+    const currentHTML = document.documentElement.outerHTML;
+    // Inject data initialization script
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      data: DATA,
+      periods: DATA._periods || [],
+      criteria: typeof CRITERIA !== 'undefined' ? CRITERIA : null,
+      radarTargets: typeof RADAR_TARGETS !== 'undefined' ? RADAR_TARGETS : null
+    };
+    const initScript = `
+<script id="__embeddedData__">
+(function(){
+  window.__EMBEDDED_DATA__ = ${JSON.stringify(payload)};
+  // Auto-restore on load
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      if(window.__EMBEDDED_DATA__ && typeof DATA !== 'undefined'){
+        DATA = window.__EMBEDDED_DATA__.data;
+        DATA._periods = window.__EMBEDDED_DATA__.periods;
+        if(window.__EMBEDDED_DATA__.criteria && typeof CRITERIA !== 'undefined') Object.assign(CRITERIA, window.__EMBEDDED_DATA__.criteria);
+        if(window.__EMBEDDED_DATA__.radarTargets && typeof RADAR_TARGETS !== 'undefined') RADAR_TARGETS = window.__EMBEDDED_DATA__.radarTargets;
+        if(typeof onLoadFromSource === 'function'){
+          onLoadFromSource('📦 Embedded · ' + DATA.length + ' routes · ' + (DATA._periods||[]).length + ' เดือน');
+        }
+        if(typeof toast === 'function') toast('✓ โหลดข้อมูลที่ฝังในไฟล์สำเร็จ','success');
+      }
+    }, 800);
+  });
+})();
+<` + `/script>
+`;
+    // Strip any pre-existing embedded data script (for re-export)
+    let modifiedHTML = currentHTML.replace(/<script id="__embeddedData__">[\s\S]*?<\/script>/g, '');
+    // Inject before closing </body>
+    modifiedHTML = modifiedHTML.replace('</body>', initScript + '</body>');
+
+    const blob = new Blob([modifiedHTML], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const ts = new Date().toISOString().substring(0,10);
+    a.href = url;
+    a.download = `route_efficiency_dashboard_${ts}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+    const sizeMB = (modifiedHTML.length / 1024 / 1024).toFixed(2);
+    toast(`✓ Export Dashboard + Data: ${DATA.length} routes (${sizeMB} MB · .html)`,'success');
+  } catch(err){
+    toast('❌ Export ไม่สำเร็จ: '+err.message,'error');
+  }
+}
+
+// ============ Cloud Help ============
+function showGDriveHelp(){
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay show';
+  modal.style.cssText = 'display:flex;align-items:center;justify-content:center;z-index:9000;';
+  modal.innerHTML = `
+    <div style="background:var(--surface);border-radius:14px;padding:24px 28px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:700;color:var(--ink);">☁️ Setup Google Drive Sharing</div>
+        <button onclick="this.closest('.modal-overlay').remove();" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-soft);">✕</button>
+      </div>
+      <div style="font-size:12.5px;line-height:1.75;color:var(--ink-2);">
+        <p style="margin-bottom:10px;"><strong>วิธีใช้ Google Drive เป็น Cloud Storage:</strong></p>
+        <ol style="margin-left:18px;display:flex;flex-direction:column;gap:9px;">
+          <li><strong>1. Export ข้อมูล</strong> → กด <kbd style="background:var(--bg-soft);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:11px;">📥 Export Data Only (.json)</kbd> หรือ <kbd style="background:var(--bg-soft);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:11px;">📤 Export Dashboard + Data (.html)</kbd></li>
+          <li><strong>2. อัปโหลดไป Google Drive</strong> → ลากไฟล์ไปที่โฟลเดอร์ของคุณบน Google Drive</li>
+          <li><strong>3. ตั้ง Sharing เป็น "Anyone with the link"</strong> → คลิกขวาที่ไฟล์ → Share → Anyone with the link</li>
+          <li><strong>4. Copy Direct Link</strong>:
+            <div style="margin-top:6px;background:var(--bg-soft);padding:8px 10px;border-radius:7px;font-family:var(--font-mono);font-size:10.5px;word-break:break-all;">
+              https://drive.google.com/uc?export=download&id=<strong style="color:var(--primary);">FILE_ID</strong>
+            </div>
+            <div style="font-size:10.5px;color:var(--ink-soft);margin-top:4px;">เปลี่ยน FILE_ID จาก URL ของ Drive (เช่น 1a2B3c4D5)</div>
+          </li>
+          <li><strong>5. วาง Link ใน "Source Bar"</strong> ของ Dashboard → กด Load</li>
+        </ol>
+        <p style="margin-top:14px;padding:10px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;font-size:11.5px;color:#92400e;">
+          💡 <strong>Tip:</strong> .html มาตรฐานเปิดได้ทันทีโดยตรง · .json ต้อง Load ใน Dashboard ก่อน
+        </p>
+        <p style="margin-top:10px;padding:10px 12px;background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;font-size:11px;color:var(--ink-soft);">
+          📌 <strong>หมายเหตุ:</strong> Google Drive ต้องเป็น Public หรือ Anyone with link เท่านั้น (ไม่สามารถใช้ Private files ผ่าน browser ตรงๆ ได้)
+        </p>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e=>{ if(e.target === modal) modal.remove(); });
 }
 
 // ==================== CRITERIA EDITOR ====================
@@ -7711,7 +8258,7 @@ function renderCoachingAIAction(bodyEl, sessions){
       </div>
 
       <!-- AI Output Area -->
-      <div id="aiActionOutput" style="min-height:200px;">
+      <div id="aiActionOutput">
         ${AI_LAST_RESULT ? renderAIActionResult(AI_LAST_RESULT) : `
           <div style="text-align:center;padding:40px 20px;background:var(--surface);border:2px dashed var(--line);border-radius:11px;">
             <div style="font-size:38px;margin-bottom:8px;opacity:.5;">🤖</div>
@@ -7842,39 +8389,38 @@ function generateLocalAIAction(ctx){
   const insights = [];
   const actions = [];
 
-  // 1. Overall health
+  // 1. Overall health (always shown)
   if(ctx.overallAvg < 2.0){
     insights.push({
       type:'critical',
       icon:'🚨',
-      title:'Coaching คุณภาพต่ำกว่าเกณฑ์',
-      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 อยู่ในเกณฑ์ "ต้องพัฒนา" ทั้งระบบ — บ่งชี้ปัญหาเชิงระบบ ไม่ใช่ปัญหาคนใดคนหนึ่ง`
+      title:'Coaching คุณภาพต่ำกว่าเกณฑ์ระบบ',
+      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 อยู่ในเกณฑ์ "ต้องพัฒนา" — บ่งชี้ปัญหาเชิงระบบ ต้องการ intervention เร่งด่วน`
     });
   } else if(ctx.overallAvg < 2.5){
     insights.push({
       type:'warn',
       icon:'⚠️',
       title:'Coaching อยู่ในเกณฑ์ปานกลาง',
-      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 — ยังมี gap จากระดับยอดเยี่ยม (≥2.5) ที่ ${(2.5-ctx.overallAvg).toFixed(2)} pts`
+      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 — ยังมี gap จากระดับยอดเยี่ยม (≥2.5) ที่ ${(2.5-ctx.overallAvg).toFixed(2)} pts สามารถปรับปรุงได้`
     });
   } else {
     insights.push({
       type:'good',
       icon:'✓',
       title:'Coaching อยู่ในเกณฑ์ดี',
-      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 — รักษามาตรฐานนี้ไว้ และโฟกัสที่จุดอ่อนเฉพาะจุด`
+      detail:`คะแนนเฉลี่ย ${ctx.overallAvg.toFixed(2)}/3.0 ระดับยอดเยี่ยม — รักษามาตรฐานนี้ไว้และโฟกัสที่จุดอ่อนเฉพาะ`
     });
   }
 
-  // 2. Weakest step pattern
-  if(ctx.weakest.avg < 2.3){
+  // 2. Weakest step (always shown — threshold raised to 2.5)
+  if(ctx.weakest.avg < 2.5){
     insights.push({
-      type:'warn',
+      type: ctx.weakest.avg < 2.0 ? 'critical' : 'warn',
       icon:'📉',
       title:`จุดอ่อนระบบ: ${ctx.weakest.label}`,
-      detail:`คะแนนเฉลี่ย ${ctx.weakest.avg.toFixed(2)} ต่ำกว่า benchmark 2.5 อยู่ ${(2.5-ctx.weakest.avg).toFixed(2)} pts — ทั้งทีมต้องการ training เพิ่ม`
+      detail:`คะแนนเฉลี่ย ${ctx.weakest.avg.toFixed(2)} — เป็นขั้นตอนที่ทำได้ต่ำสุดในทีม จากทั้งหมด ${ctx.allSteps.length} ขั้น ${ctx.weakest.avg<2.0?'ต้อง re-training ด่วน':'ควร training เพิ่ม'}`
     });
-    // Specific actions per weak step
     const stepActions = {
       'customerPrep': [
         'จัดอบรม Route Planning workshop รายเดือน',
@@ -7912,20 +8458,51 @@ function generateLocalAIAction(ctx){
         '1-on-1 mental health/career check-in กับ RS'
       ]
     };
-    (stepActions[ctx.weakest.key]||[]).forEach(a=>{
+    (stepActions[ctx.weakest.key]||[]).slice(0,2).forEach(a=>{
       actions.push({priority:'high', who:'Sales Director + RS Team', action:a, impact:`พัฒนา ${ctx.weakest.label}`});
+    });
+  } else {
+    insights.push({
+      type:'good',
+      icon:'✓',
+      title:`จุดแข็งของทีม: ${ctx.strongest.label}`,
+      detail:`คะแนนสูงสุด ${ctx.strongest.avg.toFixed(2)} — ทีมทำได้ดีในขั้นตอนนี้ ใช้เป็น case study สำหรับการ training ขั้นอื่น`
     });
   }
 
-  // 3. Critical RS
+  // 3. Step gap analysis (NEW — always shown)
+  const stepGap = ctx.strongest.avg - ctx.weakest.avg;
+  if(stepGap >= 0.5){
+    insights.push({
+      type:'warn',
+      icon:'📊',
+      title:'ทักษะกระจายไม่สม่ำเสมอ',
+      detail:`Gap ระหว่างจุดแข็ง (${ctx.strongest.label} ${ctx.strongest.avg.toFixed(2)}) กับจุดอ่อน (${ctx.weakest.label} ${ctx.weakest.avg.toFixed(2)}) = ${stepGap.toFixed(2)} pts — ทีมเก่งบางขั้น แต่ขาดบางขั้น`
+    });
+    actions.push({
+      priority:'medium',
+      who:'RS Training Team',
+      action:`จัด targeted training เฉพาะขั้นตอนที่อ่อน (${ctx.weakest.label}) โดยใช้ peer learning จากคนที่เก่ง ${ctx.strongest.label}`,
+      impact:'ลด skill gap ภายในทีม'
+    });
+  } else if(stepGap < 0.2){
+    insights.push({
+      type:'good',
+      icon:'⚖️',
+      title:'ทักษะกระจายสม่ำเสมอ',
+      detail:`Gap ระหว่างจุดแข็งและจุดอ่อนเพียง ${stepGap.toFixed(2)} pts — ทีมพัฒนาแบบสมดุล สามารถยกระดับโดยรวมได้`
+    });
+  }
+
+  // 4. Critical RS
   if(ctx.criticalRs.length > 0){
     insights.push({
       type:'critical',
       icon:'👥',
-      title:`RS ${ctx.criticalRs.length} คนต้องดูแลด่วน`,
-      detail:`RS ที่คะแนนเฉลี่ย < 2.0: ${ctx.criticalRs.map(r=>r.rs).join(', ')} — ต้องประเมิน skill gap และอาจต้อง re-training`
+      title:`RS ${ctx.criticalRs.length} คน ต้องดูแลด่วน`,
+      detail:`RS ที่คะแนนเฉลี่ย < 2.0: ${ctx.criticalRs.slice(0,3).map(r=>r.rs).join(', ')}${ctx.criticalRs.length>3?'...':''} — ต้องประเมิน skill gap และอาจต้อง re-training`
     });
-    ctx.criticalRs.slice(0,3).forEach(r=>{
+    ctx.criticalRs.slice(0,2).forEach(r=>{
       actions.push({
         priority:'critical',
         who:`Sales Director → ${r.rs}`,
@@ -7933,15 +8510,23 @@ function generateLocalAIAction(ctx){
         impact:`ยกระดับ RS coaching จาก ${r.avgScore.toFixed(2)} → 2.5+`
       });
     });
+  } else if(ctx.rsCount > 0){
+    // No critical RS — show as positive
+    insights.push({
+      type:'good',
+      icon:'✓',
+      title:`ไม่มี RS ในเขต Critical`,
+      detail:`RS ทั้ง ${ctx.rsCount} คนคะแนนเฉลี่ย ≥ 2.0 — แสดงว่า RS Team มีคุณภาพดี ไม่มีคนที่ต้องแก้ไขด่วน`
+    });
   }
 
-  // 4. Top RS leverage
-  if(ctx.topRs.length > 0 && ctx.topRs[0].avgScore >= 2.6){
+  // 5. Top RS leverage
+  if(ctx.topRs.length > 0 && ctx.topRs[0].avgScore >= 2.5){
     insights.push({
       type:'good',
       icon:'🏆',
-      title:'มี Top RS ที่ใช้เป็น Mentor ได้',
-      detail:`RS ที่ทำได้ดีที่สุด: ${ctx.topRs.map(r=>`${r.rs} (${r.avgScore.toFixed(2)})`).join(', ')} — ควรให้เป็น Mentor หรือทำ Best Practice sharing`
+      title:'มี Top RS เป็น Mentor ได้',
+      detail:`RS ทำได้ดีที่สุด: ${ctx.topRs.map(r=>`${r.rs} (${r.avgScore.toFixed(2)})`).join(', ')} — ควรใช้เป็น Mentor หรือ Best Practice sharing`
     });
     actions.push({
       priority:'medium',
@@ -7951,13 +8536,13 @@ function generateLocalAIAction(ctx){
     });
   }
 
-  // 5. Critical salesman
+  // 6. Critical salesman
   if(ctx.criticalSM.length > 0){
     insights.push({
       type:'warn',
       icon:'🎯',
       title:`Salesman ${ctx.criticalSM.length} คน Performance ต่ำ`,
-      detail:`Salesman ที่คะแนน Coaching < 2.0: ${ctx.criticalSM.slice(0,5).map(s=>s.sm).join(', ')}${ctx.criticalSM.length>5?'...':''} — อาจมีปัญหา skill หรือ motivation`
+      detail:`Salesman ที่คะแนน Coaching < 2.0: ${ctx.criticalSM.slice(0,4).map(s=>s.sm).join(', ')}${ctx.criticalSM.length>4?'...':''} — อาจมีปัญหา skill หรือ motivation`
     });
     actions.push({
       priority:'high',
@@ -7967,12 +8552,12 @@ function generateLocalAIAction(ctx){
     });
   }
 
-  // 6. Declining salesman (early warning)
+  // 7. Declining salesman
   if(ctx.decliningSM.length > 0){
     insights.push({
       type:'warn',
       icon:'📉',
-      title:`Salesman ${ctx.decliningSM.length} คนกำลัง Drop`,
+      title:`Salesman ${ctx.decliningSM.length} คน trend ลดลง`,
       detail:`Salesman ที่คะแนนลดลงจากเดิม: ${ctx.decliningSM.slice(0,3).map(s=>s.sm).join(', ')} — Early warning ต้องเข้าช่วยก่อนสาย`
     });
     actions.push({
@@ -7983,31 +8568,73 @@ function generateLocalAIAction(ctx){
     });
   }
 
-  // 7. Re-coaching backlog
-  if(ctx.recoachCount > 0){
-    actions.push({
-      priority: ctx.recoachCount > 20 ? 'critical' : 'medium',
-      who:'RS Team',
-      action:`Complete re-coaching backlog (${ctx.recoachCount} sessions) ภายในเดือนนี้ — track ผ่าน RS Coaching tracker`,
-      impact:`ปลดล็อก salesman ที่ pending การพัฒนา`
+  // 8. Low score session %
+  if(ctx.lowPct >= 15){
+    insights.push({
+      type:'warn',
+      icon:'⚠️',
+      title:`Sessions คะแนนต่ำ ${ctx.lowPct.toFixed(1)}%`,
+      detail:`${ctx.lowSessions} จาก ${ctx.totalSessions} sessions มีคะแนน < 2.0 (${ctx.lowPct.toFixed(1)}%) ${ctx.lowPct>=25?'— สัดส่วนสูงผิดปกติ ต้อง audit RS performance':'— ระดับนี้ยังจัดการได้แต่ต้องโฟกัส'}`
     });
   }
 
-  // 8. Session type imbalance
+  // 9. Re-coaching backlog
+  if(ctx.recoachCount > 0){
+    const severity = ctx.recoachCount > 50 ? 'critical' : ctx.recoachCount > 20 ? 'high' : 'medium';
+    actions.push({
+      priority: severity,
+      who:'RS Team',
+      action:`Complete re-coaching backlog ${ctx.recoachCount} sessions ภายในเดือนนี้ — track ผ่าน RS Coaching tracker`,
+      impact:`ปลดล็อก salesman ที่ pending การพัฒนา`
+    });
+    if(ctx.recoachCount > 50){
+      insights.push({
+        type:'critical',
+        icon:'📋',
+        title:`Re-coaching Backlog ${ctx.recoachCount} sessions`,
+        detail:`มี salesman ${ctx.recoachCount} คนรอ re-coaching — สัดส่วนสูง อาจสะท้อนว่าทีมไม่สามารถปิด session ได้ทัน หรือมี salesman ที่ต้องการความช่วยเหลือมากผิดปกติ`
+      });
+    }
+  }
+
+  // 10. Session type imbalance
   const totalType = Object.values(ctx.sessionTypes).reduce((a,b)=>a+b,0);
   const fieldPct = (ctx.sessionTypes['Field Coaching']||0)/totalType*100;
   if(fieldPct < 60){
     insights.push({
       type:'warn',
       icon:'🏪',
-      title:'Field Coaching น้อยเกินไป',
-      detail:`Field Coaching ${fieldPct.toFixed(0)}% — มาตรฐาน Suntory แนะนำ ≥ 70% เพราะการสอนภาคสนามสร้าง impact มากกว่า classroom`
+      title:`Field Coaching เพียง ${fieldPct.toFixed(0)}%`,
+      detail:`มาตรฐาน Suntory แนะนำ ≥ 70% เพราะการสอนภาคสนามสร้าง impact มากกว่า classroom`
     });
     actions.push({
       priority:'medium',
       who:'RS Team',
       action:`เพิ่มสัดส่วน Field Coaching เป็น ≥ 70% ลด Classroom session ที่ทดแทนได้ด้วย E-learning`,
       impact:'เพิ่มประสิทธิภาพการพัฒนา salesman จริงในตลาด'
+    });
+  } else if(fieldPct >= 75){
+    insights.push({
+      type:'good',
+      icon:'🏪',
+      title:`Field Coaching ${fieldPct.toFixed(0)}% — ตามมาตรฐาน`,
+      detail:`สัดส่วน Field Coaching สูง ตรงตามแนวทางที่ Suntory แนะนำ — ทีมเน้นการสอนในสนามจริง`
+    });
+  }
+
+  // Generic Recommended Action if not enough yet
+  if(actions.length < 3){
+    actions.push({
+      priority:'medium',
+      who:'Sales Director',
+      action:`Quarterly Sales Coaching Review — ประเมิน RS Team ทุก 3 เดือน + adjust development plan ตามผลลัพธ์`,
+      impact:'รักษามาตรฐานและ track progress ของ Coaching effectiveness'
+    });
+    actions.push({
+      priority:'low',
+      who:'RS Team',
+      action:`บันทึก Coaching session ใน HH/E-form ภายใน 24 ชั่วโมงหลังเข้าสาย — ข้อมูล real-time มี value มากกว่าย้อนหลัง`,
+      impact:'Data quality ของ Coaching tracker'
     });
   }
 
@@ -8018,11 +8645,11 @@ function generateLocalAIAction(ctx){
   // Generate summary
   let summary = '';
   if(ctx.overallAvg >= 2.5){
-    summary = `ทีม Coaching อยู่ในเกณฑ์ดี (${ctx.overallAvg.toFixed(2)}/3.0) แต่ยังมี gap ที่จุดอ่อนเฉพาะ — ${ctx.weakest.label} ที่ต้องโฟกัส และอาจเริ่มทำ best practice sharing จาก Top RS เพื่อยกระดับทีมต่อ`;
+    summary = `ทีม Coaching อยู่ในเกณฑ์ดี (${ctx.overallAvg.toFixed(2)}/3.0) — รักษามาตรฐานนี้ไว้ โฟกัสที่ ${ctx.weakest.label} ที่เป็นจุดอ่อนเฉพาะ และใช้ best practice จาก ${ctx.topRs[0]?.rs || 'top RS'} เพื่อยกระดับทีมต่อ`;
   } else if(ctx.overallAvg >= 2.0){
-    summary = `ทีม Coaching อยู่ในเกณฑ์ปานกลาง (${ctx.overallAvg.toFixed(2)}/3.0) — ต้องโฟกัส 2 จุด: (1) พัฒนา ${ctx.weakest.label} ผ่าน targeted training และ (2) ดูแล RS ${ctx.criticalRs.length} คน + Salesman ${ctx.criticalSM.length} คนที่อยู่ใน critical zone อย่างเป็นระบบ`;
+    summary = `ทีม Coaching อยู่ในเกณฑ์ปานกลาง (${ctx.overallAvg.toFixed(2)}/3.0) — มี 2 จุดต้องโฟกัส: (1) พัฒนา ${ctx.weakest.label} ผ่าน targeted training, (2) ดูแล RS ${ctx.criticalRs.length} คน + Salesman ${ctx.criticalSM.length} คนที่อยู่ใน critical zone อย่างเป็นระบบ`;
   } else {
-    summary = `🚨 ทีม Coaching อยู่ในเกณฑ์ต่ำกว่ามาตรฐาน (${ctx.overallAvg.toFixed(2)}/3.0) — บ่งชี้ปัญหาเชิงระบบ ต้อง: (1) ประเมิน RS ${ctx.criticalRs.length} คน, (2) re-training ทั้งทีมเรื่อง ${ctx.weakest.label}, (3) ตั้ง Task Force ติดตามรายสัปดาห์ มี Sales Director เป็น sponsor โดยตรง`;
+    summary = `🚨 ทีม Coaching อยู่ในเกณฑ์ต่ำกว่ามาตรฐาน (${ctx.overallAvg.toFixed(2)}/3.0) — บ่งชี้ปัญหาเชิงระบบ ต้อง: (1) ประเมิน RS ${ctx.criticalRs.length} คน, (2) re-training ทั้งทีมเรื่อง ${ctx.weakest.label}, (3) ตั้ง Task Force ติดตามรายสัปดาห์`;
   }
 
   return {
@@ -8573,8 +9200,15 @@ function renderRouteHeatmap(){
 }
 
 function renderRouteGrid(routes, lvlFor, mode){
-  const cols = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 4 : 6);
-  let html = `<div class="heatmap-grid" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr));">`;
+  // Responsive columns: 2 (mobile) / 4 (tablet) / 8 (laptop) / 12 (desktop)
+  const w = window.innerWidth;
+  const cols = w <= 480 ? 2 :
+               w <= 768 ? 3 :
+               w <= 1100 ? 6 :
+               w <= 1400 ? 8 : 12;
+  // Use compact cell styling when many columns
+  const compact = cols >= 8;
+  let html = `<div class="heatmap-grid heatmap-route-grid${compact?' compact':''}" style="grid-template-columns:repeat(${cols}, minmax(0, 1fr));gap:${compact?5:8}px;">`;
   routes.forEach(r=>{
     const lvl = lvlFor(r.density);
     const valStr = fmtDensity(r.density, DENSITY_MODE);
@@ -8584,9 +9218,9 @@ function renderRouteGrid(routes, lvlFor, mode){
                             `${Math.round(r.monthlySales/1000)}K ฿`;
     html += `
       <div class="heatmap-cell lvl-${lvl}" onclick="openDrill('${escapeHtml(r.routeId)}')" title="${escapeHtml(r.routeId)} · ${escapeHtml(r.salesman)} · ${valStr} ${mode.short} · ${r.outlets} outlets · กดเพื่อ Drill-Down">
-        <div style="font-size:10px;font-weight:700;letter-spacing:.3px;opacity:.85;align-self:flex-start;">${escapeHtml(r.routeId)}</div>
+        <div class="hm-route-id">${escapeHtml(r.routeId)}</div>
         <div class="heatmap-cell-val">${valStr}</div>
-        <div class="heatmap-cell-sub">${escapeHtml(r.salesman||'-')}<br>${secondaryMetric}</div>
+        <div class="heatmap-cell-sub">${compact ? escapeHtml(r.salesman||'-') : `${escapeHtml(r.salesman||'-')}<br>${secondaryMetric}`}</div>
       </div>
     `;
   });
@@ -9152,6 +9786,20 @@ function renderAll(){
 CRITERIA = loadCriteria();
 loadTaxonomies();
 loadSampleData();
+
+// Auto-detect previously saved data in Browser → show non-blocking banner
+setTimeout(()=>{ tryAutoLoadOnStartup(); }, 1500);
+
+// Close Save/Load dropdown when clicking outside
+document.addEventListener('click', e=>{
+  const dd = document.getElementById('saveLoadDropdown');
+  if(!dd) return;
+  const btn = e.target.closest('button[onclick*="toggleSaveLoadMenu"]');
+  if(!btn && !dd.contains(e.target)){
+    dd.classList.remove('show');
+  }
+});
+
 </script>
 </body>
 </html>
