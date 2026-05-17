@@ -1016,6 +1016,24 @@ tbody tr:last-child td{border-bottom:none;}
   /* Charts - smaller height */
   .chart-wrap,.chart-wrap.tall{height:200px !important;}
   canvas{max-height:240px !important;}
+
+  /* Radar chart needs SQUARE aspect ratio on mobile - override */
+  #chartRadar{max-height:none !important;width:100% !important;height:auto !important;}
+  .chart-wrap:has(> #chartRadar){
+    height:auto !important;
+    aspect-ratio:1 / 1;
+    min-height:280px;
+    max-width:100%;
+    padding:0 !important;
+    overflow:hidden;
+  }
+  /* Fallback for browsers without :has() */
+  .card .chart-wrap > canvas#chartRadar{
+    max-width:100%;
+    width:100% !important;
+    height:auto !important;
+    min-height:260px;
+  }
   .matrix-chart, [style*="height:380px"], [style*="height:320px"], [style*="height:300px"]{
     height:240px !important;
   }
@@ -1024,14 +1042,26 @@ tbody tr:last-child td{border-bottom:none;}
   [style*="height:200px"]{height:180px !important;}
 
   /* Tables - horizontal scroll */
-  .card > div[style*="overflow"], .table-wrap{
-    overflow-x:auto;-webkit-overflow-scrolling:touch;
-    margin:0 -11px;padding:0 11px;
+  .card div[style*="overflow"], .table-wrap, .tbl-wrap{
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch;
+    max-width:100%;
+  }
+  /* Force card and its children to allow shrinking (required for overflow to work in flex/grid) */
+  .card, .card > *, .card > * > *, #coachingBody, #coachingBody > div{
+    min-width:0;
+    max-width:100%;
+  }
+  /* Coaching body inner wrappers */
+  #coachingBody > div > div[style*="overflow"]{
+    width:100%;
+    max-width:100%;
   }
   table{font-size:10.5px;min-width:680px;}
   th,td{padding:6px 7px !important;font-size:10.5px;}
   th{font-size:9px;letter-spacing:.3px;}
   .table-wrap td:first-child,
+  .tbl-wrap td:first-child,
   table tbody tr td:first-child{position:sticky;left:0;background:var(--surface);z-index:1;}
   tbody tr:hover td:first-child{background:var(--bg-soft);}
 
@@ -1093,6 +1123,24 @@ tbody tr:last-child td{border-bottom:none;}
   .coaching-sessions-tbl{font-size:10px;min-width:900px;}
   .coaching-sessions-tbl th{font-size:9px;padding:5px 6px;}
   .coaching-sessions-tbl td{padding:5px 6px;}
+
+  /* Sticky first column (Date) for coaching session table on mobile */
+  .coaching-sessions-tbl thead th{
+    position:sticky;top:0;z-index:2;background:var(--bg-soft);
+  }
+  .coaching-sessions-tbl thead th:first-child{
+    position:sticky;left:0;top:0;z-index:4;
+    background:var(--bg-soft);
+    box-shadow:2px 0 4px rgba(0,0,0,.06);
+  }
+  .coaching-sessions-tbl tbody td:first-child{
+    position:sticky;left:0;z-index:2;
+    background:var(--surface);
+    box-shadow:2px 0 4px rgba(0,0,0,.06);
+  }
+  .coaching-sessions-tbl tbody tr:hover td:first-child{
+    background:var(--bg-soft);
+  }
   .csess-score-pill{font-size:10px;min-width:30px;padding:1px 5px;}
 
   /* Strategic Analysis */
@@ -3807,6 +3855,7 @@ function renderRadar(){
 
   if(CHARTS.radar) CHARTS.radar.destroy();
   const ctx = document.getElementById('chartRadar').getContext('2d');
+  const isMobile = window.innerWidth <= 768;
   CHARTS.radar = new Chart(ctx,{
     type:'radar',
     data:{
@@ -3818,13 +3867,15 @@ function renderRadar(){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,
+      maintainAspectRatio: isMobile ? true : false,
+      aspectRatio: isMobile ? 1 : undefined,
+      layout: { padding: isMobile ? 8 : 4 },
       plugins:{
-        legend:{display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,font:{size:11,family:'Sarabun'},color:'#6b7280',padding:8}},
+        legend:{display:true,position:'top',align:'end',labels:{boxWidth:10,boxHeight:10,font:{size:isMobile?9.5:11,family:'Sarabun'},color:'#6b7280',padding:isMobile?5:8}},
         tooltip:{backgroundColor:'#0a1628',padding:11,titleFont:{family:'Space Grotesk',size:12,weight:'600'},bodyFont:{family:'Sarabun',size:11.5},cornerRadius:8,callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.r.toFixed(1)}%`}}
       },
       scales:{
-        r:{angleLines:{color:'#e5e0d3'},grid:{color:'#e5e0d3'},pointLabels:{color:'#4b5563',font:{family:'Sarabun',size:11,weight:'600'}},ticks:{display:false,beginAtZero:true,max:100,backdropColor:'transparent'},suggestedMax:100,suggestedMin:0}
+        r:{angleLines:{color:'#e5e0d3'},grid:{color:'#e5e0d3'},pointLabels:{color:'#4b5563',font:{family:'Sarabun',size:isMobile?9.5:11,weight:'600'},padding:isMobile?3:5},ticks:{display:false,beginAtZero:true,max:100,backdropColor:'transparent'},suggestedMax:100,suggestedMin:0}
       }
     }
   });
