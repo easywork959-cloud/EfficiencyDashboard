@@ -4886,12 +4886,77 @@ function handleFileUpload(e){
     const reader = new FileReader();
     reader.onload = ev=>{
       const wb = XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
-      // Prefer "Routes" sheet, fall back to first sheet
-      const sheetName = wb.SheetNames.includes('Routes') ? 'Routes' : wb.SheetNames[0];
-      const ws = wb.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(ws,{defval:null});
-      const parsed = importRows(json);
+      // Multi-sheet support: Routes (KPI), Outlets (master), Coaching (sessions)
+      const routesSheet = wb.SheetNames.find(n=>n.toLowerCase()==='routes') || wb.SheetNames[0];
+      const outletsSheet = wb.SheetNames.find(n=>n.toLowerCase()==='outlets');
+      const coachingSheet = wb.SheetNames.find(n=>n.toLowerCase()==='coaching');
+
+      const routesJson = XLSX.utils.sheet_to_json(wb.Sheets[routesSheet],{defval:null});
+      const outletsJson = outletsSheet ? XLSX.utils.sheet_to_json(wb.Sheets[outletsSheet],{defval:null}) : [];
+      const coachingJson = coachingSheet ? XLSX.utils.sheet_to_json(wb.Sheets[coachingSheet],{defval:null}) : [];
+
+      const parsed = importRows(routesJson);
       if(parsed){
+        // Attach outlets to routes (group by Route ID)
+        if(outletsJson.length){
+          const byRoute = {};
+          outletsJson.forEach(o=>{
+            const rid = o['Route ID'] || o['route_id'] || o['routeId'];
+            if(!rid) return;
+            if(!byRoute[rid]) byRoute[rid] = [];
+            byRoute[rid].push({
+              id: o['Outlet ID'] || o['outletId'] || `O${byRoute[rid].length+1}`,
+              customerName: o['Customer Name'] || o['customer_name'] || '',
+              province: o['Province'] || o['province'] || 'Unknown',
+              district: o['District (อำเภอ)'] || o['District'] || o['district'] || '',
+              segment: o['Segmentation'] || o['Segment'] || o['segment'] || SEGMENTATION_VALUES[0],
+              shopType: o['Shop Type'] || o['shopType'] || SHOP_TYPE_VALUES[0],
+              saleType: o['Sale Type'] || o['saleType'] || 'Presales',
+              lat: +o['Latitude'] || null,
+              lng: +o['Longitude'] || null,
+              monthlySales: +o['Monthly Sales (฿)'] || 0,
+              visitFreq: +o['Visit Frequency'] || 0,
+              strikeRate: +o['Strike Rate %'] || 0,
+              status: o['Status'] || 'Active'
+            });
+          });
+          parsed.forEach(r=>{
+            if(byRoute[r.routeId]) r.outlets = byRoute[r.routeId];
+          });
+          toast(`Parsed: ${parsed.length} routes + ${outletsJson.length} outlets`, 'info');
+        }
+        // Attach coaching sessions
+        if(coachingJson.length){
+          const byRouteC = {};
+          coachingJson.forEach(c=>{
+            const rid = c['Route ID'] || c['route_id'] || c['routeId'];
+            if(!rid) return;
+            if(!byRouteC[rid]) byRouteC[rid] = [];
+            byRouteC[rid].push({
+              date: c['Coaching Date'] || c['date'] || '',
+              period: c['Period'] || c['period'] || '',
+              rs: c['RS Name'] || c['RS'] || c['rs'] || '',
+              salesman: c['Salesman'] || c['salesman'] || '',
+              sessionType: c['Session Type'] || c['sessionType'] || 'Field Coaching',
+              duration_min: +c['Duration (min)'] || +c['duration_min'] || 60,
+              customerPrep: +c['1.Customer Prep'] || +c['customerPrep'] || 0,
+              introduction: +c['2.Introduction'] || +c['introduction'] || 0,
+              surveyStock: +c['3.Survey Stock'] || +c['surveyStock'] || 0,
+              presentation: +c['4.Presentation'] || +c['presentation'] || 0,
+              merchandising: +c['5.Merchandising'] || +c['merchandising'] || 0,
+              review: +c['6.Review'] || +c['review'] || 0,
+              attitude: +c['Attitude'] || +c['attitude'] || 0,
+              overall: +c['Overall'] || +c['overall'] || 0,
+              notes: c['Notes'] || c['notes'] || '',
+              followUpAction: c['Follow-up Action'] || c['followUpAction'] || 'ปกติ'
+            });
+          });
+          parsed.forEach(r=>{
+            if(byRouteC[r.routeId]) r.coaching = byRouteC[r.routeId];
+          });
+          const totalCoaching = coachingJson.length;
+          toast(`+ ${totalCoaching} coaching sessions imported`, 'success');
+        }
         DATA = parsed;
         onLoadFromSource('📊 '+file.name);
       } else {
@@ -5352,133 +5417,288 @@ function downloadRoutesTemplate(){
   if(typeof XLSX === 'undefined'){toast('Excel library ยังไม่โหลด','error');return;}
 
   const wb = XLSX.utils.book_new();
-  const headers = [
-    'Period','Route ID','Salesman','RS','ASM','Distributor','Province','Region','Visit Pattern','Frequency',
-    'Segmentation','Shop Type','Sales Type',
+
+  // ============================================================
+  // SHEET 1: Routes (Route × Month — Time-series KPIs)
+  // 1 row = 1 route × 1 month (no per-outlet detail here)
+  // Province/Segment/ShopType จะอ้างจากใน Outlets sheet
+  // ============================================================
+  const routeHeaders = [
+    'Period','Route ID','Salesman','RS','ASM','Distributor','Region','Visit Pattern','Frequency','Sales Type Default',
     'Sales (฿)','CTS (฿)','Active Stores','Total Outlets','Routeplan','Coverage %','GEO fencing %',
     'SKU','SKU/Outlet','Drop Size (฿)','VPO','Strike Rate %','Perfect Store %','AEO %',
     'Fuel (฿)','Distance (km)','Area (km²)','Population'
   ];
 
-  // Generate sample: 2 routes × 3 months each = 6 rows
-  const periods = ['2025-12','2026-01','2026-02'];
-  const samples = [];
+  const routeRows = [];
+  // Route R0001 × 3 months
+  ['2025-12','2026-01','2026-02'].forEach((p,i)=>{
+    routeRows.push([
+      p,'R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','NOR','Daily-D','F1','Secondary',
+      420000+i*15000, 52000+i*1500, 410+i*5, 720+i*5, 575+i*3, 91.2+i*0.4, 95.8+i*0.2, 71+i*0.5, 4.1+i*0.05,
+      1820+i*15, 5.3+i*0.05, 81.2+i*0.6, 77.8+i*0.3, 87.9+i*0.4, 9300+i*100, 2350+i*25, 220, 180000+i*2000
+    ]);
+  });
+  // Route R0002 × 3 months
+  ['2025-12','2026-01','2026-02'].forEach((p,i)=>{
+    routeRows.push([
+      p,'R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','NOE','Weekly W1','F2','Secondary',
+      365000+i*7500, 46500+i*750, 278+i*3, 490+i*2, 408+i*1, 87.5+i*0.4, 91.2+i*0.3, 63+i*1, 3.75+i*0.03,
+      1590+i*15, 4.5+i*0.05, 77.5+i*0.4, 71.5+i*0.3, 83.5+i*0.4, 7700+i*50, 1780+i*10, 180, 95000+i*1000
+    ]);
+  });
 
-  // Route R0001 - F1 Premium Traditional Trade
-  samples.push([
-    '2025-12','R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','เชียงใหม่','NOR','Daily-D','F1',
-    'Premium','Traditional Trade','Secondary',
-    420000,52000,410,720,575,91.2,95.8,71,4.1,1820,5.3,81.2,77.8,87.9,9300,2350,220,180000
-  ]);
-  samples.push([
-    '2026-01','R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','เชียงใหม่','NOR','Daily-D','F1',
-    'Premium','Traditional Trade','Secondary',
-    435000,53500,415,725,578,91.8,96.0,72,4.15,1835,5.35,81.8,78.1,88.2,9400,2380,220,182000
-  ]);
-  samples.push([
-    '2026-02','R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','เชียงใหม่','NOR','Daily-D','F1',
-    'Premium','Traditional Trade','Secondary',
-    450000,55000,420,730,580,92.5,96.2,72,4.2,1850,5.4,82.5,78.4,88.6,9500,2400,220,184000
-  ]);
-
-  // Route R0002 - F2 Mid-tier Mini-Mart
-  samples.push([
-    '2025-12','R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','ขอนแก่น','NOE','Weekly W1','F2',
-    'Mid-tier','Mini-Mart','Secondary',
-    365000,46500,278,490,408,87.5,91.2,63,3.75,1590,4.5,77.5,71.5,83.5,7700,1780,180,95000
-  ]);
-  samples.push([
-    '2026-01','R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','ขอนแก่น','NOE','Weekly W1','F2',
-    'Mid-tier','Mini-Mart','Secondary',
-    372000,47200,282,492,409,87.9,91.5,64,3.78,1605,4.55,77.9,71.8,83.9,7750,1790,180,96000
-  ]);
-  samples.push([
-    '2026-02','R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','ขอนแก่น','NOE','Weekly W1','F2',
-    'Mid-tier','Mini-Mart','Secondary',
-    380000,48000,285,495,410,88.3,91.7,65,3.8,1620,4.6,78.2,72.1,84.2,7800,1800,180,97000
-  ]);
-
-  const aoa = [headers, ...samples];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [
-    {wch:10},{wch:10},{wch:16},{wch:14},{wch:14},{wch:22},{wch:14},{wch:9},{wch:14},{wch:11},
-    {wch:14},{wch:18},{wch:12},
-    {wch:12},{wch:11},{wch:13},{wch:13},{wch:11},{wch:11},{wch:14},
-    {wch:8},{wch:11},{wch:13},{wch:8},{wch:13},{wch:14},{wch:9},
-    {wch:11},{wch:13},{wch:11},{wch:11}
+  const routeSheet = XLSX.utils.aoa_to_sheet([routeHeaders, ...routeRows]);
+  routeSheet['!cols'] = [
+    {wch:9},{wch:9},{wch:14},{wch:13},{wch:13},{wch:22},{wch:8},{wch:12},{wch:10},{wch:14},
+    {wch:11},{wch:11},{wch:12},{wch:12},{wch:11},{wch:11},{wch:13},
+    {wch:7},{wch:10},{wch:11},{wch:7},{wch:12},{wch:14},{wch:8},
+    {wch:9},{wch:11},{wch:10},{wch:11}
   ];
-  ws['!freeze'] = {xSplit:2, ySplit:1};
-  // Number format for Sales, CTS, Drop, Fuel, Population
-  for(let r=1;r<=samples.length;r++){
-    [13,14,22,27,30].forEach(c=>{
+  routeSheet['!freeze'] = {xSplit:2, ySplit:1};
+  // Number format
+  for(let r=1;r<=routeRows.length;r++){
+    [10,11,19,24,27].forEach(c=>{ // Sales, CTS, Drop, Fuel, Population
       const a = XLSX.utils.encode_cell({r,c});
-      if(ws[a]) ws[a].z = '#,##0';
+      if(routeSheet[a]) routeSheet[a].z = '#,##0';
     });
   }
+  XLSX.utils.book_append_sheet(wb, routeSheet, 'Routes');
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Routes');
+  // ============================================================
+  // SHEET 2: Outlets (1 row = 1 outlet)
+  // Province/Segment/Shop Type/Sale Type จะอยู่ที่นี่
+  // Outlet ผูกกับ Route ผ่าน "Route ID"
+  // ============================================================
+  const outletHeaders = [
+    'Outlet ID','Route ID','Customer Name','Province','District (อำเภอ)','Segmentation','Shop Type','Sale Type',
+    'Latitude','Longitude','Monthly Sales (฿)','Visit Frequency','Strike Rate %','Status'
+  ];
 
-  // Instructions sheet
+  const outletRows = [];
+  // Route R0001 มี outlets หลายร้านในเชียงใหม่ + ลำปาง (cross-province)
+  outletRows.push(['1010000001','R0001','ห้างหุ้นส่วนจำกัด คงการค้า','เชียงใหม่','เมืองเชียงใหม่','Premium','Modern Trade','Credit',18.795,98.998,42500,24,82,'Active']);
+  outletRows.push(['1010000002','R0001','บจก.เอส.ที.เชียงใหม่','เชียงใหม่','สันทราย','Premium','Wholesale','Credit',18.862,99.078,38900,24,79,'Active']);
+  outletRows.push(['1010000008','R0001','บจก.วสันต์ เอกซ์เพรส','เชียงใหม่','แม่ริม','Mid-tier','Traditional Trade','Presales',18.934,98.945,18200,18,71,'Active']);
+  outletRows.push(['1010000010','R0001','บจก.อำพรรณ ฟาร์มา','เชียงใหม่','หางดง','Mid-tier','Mini-Mart','Presales',18.689,98.918,15800,18,68,'Active']);
+  outletRows.push(['1010000023','R0001','ร้านพรเจริญ','ลำปาง','เมืองลำปาง','Mass','Traditional Trade','Presales',18.291,99.487,12500,12,65,'Active']);
+  outletRows.push(['1010000036','R0001','มงคลชัยมาร์ท','ลำปาง','แม่ทะ','Mass','Mini-Mart','Cash',18.142,99.612,9800,12,62,'Active']);
+  outletRows.push(['1010000042','R0001','หจก.เจริญภัณฑ์ ดงเจน','เชียงใหม่','สันป่าตอง','Value','Traditional Trade','Presales',18.628,98.873,8500,8,58,'Active']);
+
+  // Route R0002 มี outlets ในขอนแก่น + อุดรธานี
+  outletRows.push(['2020000001','R0002','บจก.อีสานเทรด สาขาขอนแก่น','ขอนแก่น','เมืองขอนแก่น','Premium','Modern Trade','Credit',16.441,102.836,52000,12,84,'Active']);
+  outletRows.push(['2020000005','R0002','ร้านสุขใจมาร์ท','ขอนแก่น','บ้านไผ่','Mid-tier','Mini-Mart','Credit',16.069,102.728,22500,8,72,'Active']);
+  outletRows.push(['2020000012','R0002','หจก.ชัยพัฒนา','ขอนแก่น','พล','Mid-tier','Traditional Trade','Presales',15.812,102.602,17800,8,68,'Active']);
+  outletRows.push(['2020000018','R0002','ร้านเจริญสุข','อุดรธานี','เมืองอุดรธานี','Mass','Traditional Trade','Presales',17.405,102.789,12000,4,61,'Active']);
+  outletRows.push(['2020000025','R0002','เพ็ญมาร์ท','อุดรธานี','เพ็ญ','Mass','Mini-Mart','Cash',17.602,102.945,8200,4,57,'Active']);
+
+  const outletSheet = XLSX.utils.aoa_to_sheet([outletHeaders, ...outletRows]);
+  outletSheet['!cols'] = [
+    {wch:12},{wch:9},{wch:32},{wch:14},{wch:18},{wch:13},{wch:18},{wch:10},
+    {wch:10},{wch:10},{wch:14},{wch:10},{wch:11},{wch:9}
+  ];
+  outletSheet['!freeze'] = {xSplit:2, ySplit:1};
+  // Highlight headers + format numbers
+  for(let r=1;r<=outletRows.length;r++){
+    const salesCell = XLSX.utils.encode_cell({r,c:10});
+    if(outletSheet[salesCell]) outletSheet[salesCell].z = '#,##0';
+  }
+  XLSX.utils.book_append_sheet(wb, outletSheet, 'Outlets');
+
+  // ============================================================
+  // SHEET 3: Coaching (1 row = 1 coaching session)
+  // RS coaching log with 6-step call selling scores
+  // ============================================================
+  const coachHeaders = [
+    'Coaching Date','Period','RS Name','Salesman','Route ID','Session Type','Duration (min)',
+    '1.Customer Prep','2.Introduction','3.Survey Stock','4.Presentation','5.Merchandising','6.Review',
+    'Attitude','Overall','Notes','Follow-up Action'
+  ];
+
+  const coachRows = [];
+  // อนุชา 11 coach สมหมาย 01 (R0001) 3 ครั้ง
+  coachRows.push([
+    '2025-12-15','2025-12','อนุชา 11','สมหมาย 01','R0001','Field Coaching',120,
+    2.5,2.7,2.4,2.6,2.3,2.5,2.6,2.5,
+    'Sales presentation ดีขึ้นมาก ขาดเรื่อง stocktake','Monitor 2 สัปดาห์'
+  ]);
+  coachRows.push([
+    '2026-01-18','2026-01','อนุชา 11','สมหมาย 01','R0001','Field Coaching',150,
+    2.7,2.8,2.6,2.7,2.4,2.6,2.7,2.6,
+    'พัฒนาทุกด้าน Merchandising ยังต้องปรับ','ปกติ'
+  ]);
+  coachRows.push([
+    '2026-02-12','2026-02','อนุชา 11','สมหมาย 01','R0001','Classroom',90,
+    2.8,2.9,2.7,2.8,2.6,2.7,2.8,2.8,
+    'Top performer รักษามาตรฐาน','ปกติ'
+  ]);
+  // สมศักดิ์ 12 coach วุฒิ 02 (R0002)
+  coachRows.push([
+    '2025-12-20','2025-12','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',180,
+    1.8,2.0,1.7,1.9,1.6,1.8,2.0,1.8,
+    'ต้องพัฒนา Presentation และ Merchandising','Re-coaching เดือนหน้า'
+  ]);
+  coachRows.push([
+    '2026-01-22','2026-01','สมศักดิ์ 12','วุฒิ 02','R0002','One-on-One Review',60,
+    2.0,2.2,1.9,2.0,1.8,2.0,2.1,2.0,
+    'เริ่มดีขึ้น ต้องฝึก stocktake ให้ละเอียดขึ้น','Monitor 2 สัปดาห์'
+  ]);
+  coachRows.push([
+    '2026-02-25','2026-02','สมศักดิ์ 12','วุฒิ 02','R0002','Field Coaching',135,
+    2.2,2.3,2.1,2.2,2.0,2.1,2.3,2.2,
+    'พัฒนาขึ้นเรื่อยๆ','ปกติ'
+  ]);
+
+  const coachSheet = XLSX.utils.aoa_to_sheet([coachHeaders, ...coachRows]);
+  coachSheet['!cols'] = [
+    {wch:12},{wch:9},{wch:13},{wch:13},{wch:9},{wch:16},{wch:10},
+    {wch:11},{wch:11},{wch:11},{wch:11},{wch:11},{wch:9},
+    {wch:8},{wch:9},{wch:38},{wch:20}
+  ];
+  coachSheet['!freeze'] = {xSplit:5, ySplit:1};
+  XLSX.utils.book_append_sheet(wb, coachSheet, 'Coaching');
+
+  // ============================================================
+  // SHEET 4: Instructions
+  // ============================================================
   const inst = [
-    ['ROUTES DATA TEMPLATE — Long Format (Time-Series)'],
+    ['ROUTES DATA TEMPLATE — Multi-Sheet (Routes / Outlets / Coaching)'],
     [''],
-    ['📋 โครงสร้างไฟล์ (สำคัญมาก!)'],
-    ['• Long format: 1 row = 1 สายขาย × 1 เดือน'],
-    ['• Route ID เดียวกันต้องมีหลาย rows ถ้ามี data หลายเดือน'],
-    ['• ระบบจะ group by "Route ID" + เรียงตาม "Period" → สร้าง history อัตโนมัติ'],
-    ['• สะสมข้อมูลได้สูงสุด 24 เดือน (เก็บไว้ใน browser localStorage หรือ upload เป็นไฟล์เดียว)'],
+    ['============================================================'],
+    ['📋 โครงสร้าง 3 Sheets'],
+    ['============================================================'],
     [''],
-    ['🗓️ Period Format'],
-    ['• YYYY-MM (เช่น 2026-02, 2025-12)'],
-    ['• ⚠️ ห้ามใช้ format อื่น เช่น "Feb 2026", "02/2026" — ระบบจะ parse ไม่ได้'],
-    ['• ถ้าใส่ผิด format ระบบจะ skip row นั้น + warning'],
+    ['Sheet "Routes" — KPI รายเดือน ระดับ Route'],
+    ['• 1 row = 1 Route × 1 เดือน (Long format)'],
+    ['• Route ID เดียวกัน มีหลาย rows ถ้ามีข้อมูลหลายเดือน'],
+    ['• Province/Segment/Shop Type ของ outlets ในแต่ละ route อยู่ที่ Sheet "Outlets"'],
+    ['• ใส่เฉพาะ KPI รวมต่อเดือน: Sales, CTS, Active Stores, Strike Rate ฯลฯ'],
     [''],
-    ['📥 วิธีใช้สำหรับเก็บข้อมูลสะสม 15 เดือน'],
-    ['• Option A (แนะนำ): รวบรวมข้อมูลทั้ง 15 เดือน ในไฟล์เดียว → upload 1 ครั้ง'],
-    ['• Option B: Upload เพิ่มทีละเดือน — ระบบจะ merge กับข้อมูลเดิมใน localStorage (ถ้ามี)'],
-    ['• Dashboard จะมี Period selector ให้เลือกดู "เดือนปัจจุบัน" ได้อิสระ'],
+    ['Sheet "Outlets" — Master data ระดับร้าน (Outlet)'],
+    ['• 1 row = 1 Outlet (ร้านค้า 1 ร้าน)'],
+    ['• Outlet ผูกกับ Route ผ่าน "Route ID"'],
+    ['• 1 Route สามารถมี outlets หลายร้านในต่างจังหวัด/อำเภอ/segment/shoptype'],
+    ['• Sale Type ต่อร้าน: Credit / Presales / Cash'],
     [''],
-    ['Field Mandatory (ต้องมี)'],
-    ['• Period — YYYY-MM (สำคัญที่สุด)'],
-    ['• Route ID — รหัส unique ของแต่ละสายขาย (ต้องตรงกันข้ามเดือน)'],
-    ['• Salesman, Sales (฿), Frequency'],
-    ['• Region — NOR/NOE/BKKCT/SOU'],
+    ['Sheet "Coaching" — บันทึก Coaching session'],
+    ['• 1 row = 1 Coaching session ของ RS ที่เข้าสอน Salesman'],
+    ['• คะแนน 6-step call selling: 0.0 ถึง 3.0 ตามมาตรฐาน Suntory'],
+    ['• Session Type: Field Coaching / Classroom / One-on-One Review'],
     [''],
-    ['Field Optional'],
-    ['• RS, ASM, Distributor — ถ้าเว้นเป็น "Unknown"'],
-    ['• Visit Pattern — default "Weekly W1"'],
-    ['• Routeplan, GEO fencing, SKU/Outlet — สำหรับ Band-Weighted formula'],
-    ['• KPI อื่นๆ — ถ้าเว้น ระบบจะ forward-fill จากเดือนก่อนหน้า'],
+    ['============================================================'],
+    ['📑 Sheet "Routes" — Field Definitions'],
+    ['============================================================'],
     [''],
-    ['🔄 การจัดการข้อมูลขาดหาย (Missing Data)'],
-    ['• Strategy: Forward Fill (ใช้ค่าเดือนล่าสุดที่มี)'],
-    ['• ถ้า Route X ไม่มี data เดือน 2026-01 → ระบบใช้ค่า 2025-12 แทน'],
-    ['• Row นั้นจะถูก flag เป็น "stale" (มี icon ⚠️ ที่ table)'],
-    ['• ถ้าเป็นเดือนแรกของ route และไม่มี data → ใช้ 0'],
+    ['Period (Mandatory) — YYYY-MM (เช่น 2026-02)'],
+    ['Route ID (Mandatory) — รหัส unique ของ route (ต้องตรงกับใน Outlets/Coaching sheet)'],
+    ['Salesman, RS, ASM, Distributor — ข้อมูลทีม'],
+    ['Region — NOR / NOE / BKKCT / SOU'],
+    ['Visit Pattern — Daily-D / Weekly W1 / Bi-Weekly / Monthly / Van Sales / Wholesale Direct / Tele-Sales'],
+    ['Frequency — F1 / F2 / F3 / F4 (สำหรับ Band-Weighted formula)'],
+    ['Sales Type Default — Primary / Secondary / Tertiary (ถ้าทุก outlet ในเส้นทางเป็นแบบเดียวกัน)'],
+    ['Sales (฿) — ยอดขายรายเดือน ตัวเลขล้วน ไม่ใส่ ฿/comma'],
+    ['CTS (฿) — Cost-to-Serve รายเดือน'],
+    ['Active Stores — จำนวนร้านที่ขายจริง'],
+    ['Total Outlets — universe ทั้งหมดในพื้นที่ (ใช้คำนวณ Density)'],
+    ['Routeplan — จำนวนร้านตามแผน (สำหรับคำนวณ Coverage %)'],
+    ['Coverage %, GEO fencing %, Strike Rate %, Perfect Store %, AEO % — 0-100 (ไม่ใส่ %)'],
+    ['SKU, SKU/Outlet, Drop Size (฿), VPO — KPI การขาย'],
+    ['Fuel (฿), Distance (km), Area (km²), Population — ข้อมูลโลจิสติกส์/ประชากร'],
     [''],
-    ['📊 การคำนวณ MOM / YOY / YTD'],
-    ['• MOM = เทียบ Period ที่เลือก กับ 1 เดือนก่อน'],
-    ['• YOY = เทียบ Period ที่เลือก กับ 12 เดือนก่อน (ต้องมี data ≥ 13 เดือนถึงจะ accurate)'],
-    ['• YTD = เฉลี่ย/รวม ตั้งแต่ม.ค. ของปีเดียวกัน → ถึง Period ที่เลือก'],
-    ['• Trend Chart = แสดง 7 เดือนล่าสุดย้อนหลังจาก Period ที่เลือก'],
+    ['============================================================'],
+    ['🏪 Sheet "Outlets" — Field Definitions'],
+    ['============================================================'],
     [''],
-    ['Format ตัวเลข'],
-    ['• Sales/CTS/Drop/Fuel: ตัวเลขล้วน ไม่ใส่ comma/฿ (เช่น 450000)'],
-    ['• Coverage/Strike/PSS/AEO/GEO: 0-100 (เป็น % แล้ว ไม่ใส่ %)'],
-    ['• Frequency: F1/F2/F3/F4'],
-    ['• Region: NOR/NOE/BKKCT/SOU'],
+    ['Outlet ID (Mandatory) — รหัส unique ของแต่ละร้าน (Customer Code จาก SAP/ERP)'],
+    ['Route ID (Mandatory) — ผูกกับ Route ในsheet Routes (ต้องตรงกัน)'],
+    ['Customer Name — ชื่อร้าน'],
+    ['Province — จังหวัด เช่น เชียงใหม่, ขอนแก่น, ภูเก็ต (ภาษาไทย)'],
+    ['District (อำเภอ) — อำเภอ/เขต ที่ร้านตั้งอยู่'],
+    ['Segmentation — Premium / Mid-tier / Mass / Value (หรือชื่ออื่นตาม taxonomy)'],
+    ['Shop Type — Traditional Trade / Modern Trade / Mini-Mart / Wholesale / Horeca / Specialty'],
+    ['Sale Type — Credit / Presales / Cash'],
+    ['  • Credit = ขายเงินเชื่อ (สั่ง Sales Order)'],
+    ['  • Presales = สั่งล่วงหน้า (พรีออร์เดอร์)'],
+    ['  • Cash = Cash Sales Order (ขายสด)'],
+    ['Latitude, Longitude — พิกัด GPS ของร้าน (ใช้สำหรับ map view)'],
+    ['Monthly Sales (฿) — ยอดขายเฉลี่ยต่อเดือนของร้านนี้'],
+    ['Visit Frequency — จำนวนครั้งที่เข้าเยี่ยมต่อเดือน'],
+    ['Strike Rate % — % การปิดการขายต่อการเยี่ยม (0-100)'],
+    ['Status — Active / Inactive / On Hold'],
     [''],
-    ['💡 Tips'],
-    ['• Export จาก SAP/RPM/BI → reshape เป็น long format ใน Power Query/Excel'],
-    ['• แนะนำ: 1 ไฟล์ใส่ทั้งบริษัท × 15 เดือน (~250 routes × 15 = 3,750 rows) — เร็วและจัดการง่าย'],
-    ['• ระบบ cache ข้อมูลใน browser → refresh page ก็ยังอยู่ (ลบได้ที่ Reset)']
+    ['💡 ตัวอย่าง: 1 salesman ดูแล 200 outlets ใน 3 จังหวัด, 5 อำเภอ, 4 segment, 6 shop types'],
+    ['  → ต้องใส่ 200 rows ใน sheet Outlets ทั้งหมด ผูกกับ Route ID เดียวกัน'],
+    ['  → Dashboard จะ aggregate Province/Segment/Shop Type/Sale Type จาก outlets เหล่านี้'],
+    [''],
+    ['============================================================'],
+    ['👥 Sheet "Coaching" — Field Definitions'],
+    ['============================================================'],
+    [''],
+    ['Coaching Date (Mandatory) — YYYY-MM-DD (วันที่ RS เข้า coach)'],
+    ['Period — YYYY-MM (เดือนที่ coaching อยู่ใน)'],
+    ['RS Name (Mandatory) — ชื่อ RS ที่เข้า coach'],
+    ['Salesman (Mandatory) — ชื่อ Salesman ที่ถูก coach'],
+    ['Route ID — ผูกกับ Route (optional แต่แนะนำให้ใส่)'],
+    ['Session Type — Field Coaching / Classroom / One-on-One Review'],
+    ['Duration (min) — ระยะเวลา session (นาที)'],
+    [''],
+    ['คะแนน 6-Step Call Selling Score (0.0 - 3.0):'],
+    ['  1.Customer Prep — การเตรียมตัวก่อนเข้าร้าน'],
+    ['  2.Introduction — การแนะนำตัวที่ร้าน'],
+    ['  3.Survey Stock — การสำรวจร้านและนับสต๊อก'],
+    ['  4.Presentation — การนำเสนอและการเก็บเงิน'],
+    ['  5.Merchandising — การจัดเรียงสินค้า'],
+    ['  6.Review — การ Review และ Closing'],
+    [''],
+    ['Attitude — คะแนนเจตคติ/Soft skill (0.0 - 3.0)'],
+    ['Overall — คะแนนภาพรวม (เฉลี่ย 6 ขั้น + Attitude)'],
+    ['Notes — บันทึกข้อสังเกต/comment ของ RS'],
+    ['Follow-up Action — ปกติ / Monitor 2 สัปดาห์ / Re-coaching เดือนหน้า'],
+    [''],
+    ['============================================================'],
+    ['🔗 ความสัมพันธ์ระหว่าง Sheets'],
+    ['============================================================'],
+    [''],
+    ['Routes.Route ID  ←→  Outlets.Route ID  ←→  Coaching.Route ID'],
+    [''],
+    ['ตัวอย่าง Route R0001:'],
+    ['• Sheet Routes: 3 rows (2025-12, 2026-01, 2026-02 — KPI รวมต่อเดือน)'],
+    ['• Sheet Outlets: 7 rows (outlets 7 ร้านที่ Route R0001 ดูแล)'],
+    ['• Sheet Coaching: 3 rows (coaching 3 ครั้ง ของ RS อนุชา 11 สอน สมหมาย 01)'],
+    [''],
+    ['📊 Dashboard จะใช้ทั้ง 3 sheets:'],
+    ['• KPI Cards / Trend / Matrix → จาก Routes'],
+    ['• Density Heatmap / Segmentation / Shop Type → aggregate จาก Outlets'],
+    ['• Province filter → จาก Outlets (1 route อาจมีหลายจังหวัด)'],
+    ['• Sale Type filter → จาก Outlets'],
+    ['• RS Coaching page → จาก Coaching'],
+    [''],
+    ['============================================================'],
+    ['📤 Workflow ที่แนะนำ'],
+    ['============================================================'],
+    [''],
+    ['1. Export 3 ไฟล์จาก SAP/HH Transaction/Daily Dashboard:'],
+    ['   • Route KPI report → ใส่ใน sheet "Routes"'],
+    ['   • Customer Master + GPS → ใส่ใน sheet "Outlets"'],
+    ['   • 6-step Coaching Score → ใส่ใน sheet "Coaching"'],
+    ['2. รวม 3 sheets ในไฟล์เดียว Save เป็น .xlsx'],
+    ['3. Upload ใน Dashboard → ระบบจะอ่านทั้ง 3 sheets อัตโนมัติ'],
+    [''],
+    ['💡 ถ้าไม่มีข้อมูล Outlets/Coaching ก็ยังใช้ได้ — ระบบจะใช้แค่ Routes sheet'],
+    ['   แต่ filter Province/Segment/Shop Type จะอ้างจาก default ของ Route แทน'],
+    [''],
+    ['⚠️ ข้อควรระวัง'],
+    ['• Route ID ต้องเหมือนกันทุก sheet (case-sensitive)'],
+    ['• Period ใน Routes / Coaching ต้องเป็น YYYY-MM ไม่ใช่ format อื่น'],
+    ['• Coaching Date ต้องเป็น YYYY-MM-DD'],
+    ['• ตัวเลขห้ามใส่ comma หรือสัญลักษณ์ ฿/%'],
   ];
   const ws2 = XLSX.utils.aoa_to_sheet(inst);
-  ws2['!cols'] = [{wch:100}];
+  ws2['!cols'] = [{wch:90}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Instructions');
 
-  XLSX.writeFile(wb, 'Route_Efficiency_Routes_Template.xlsx');
-  toast('Download Routes Template สำเร็จ (Long format - 2 routes × 3 months)','success');
+  XLSX.writeFile(wb, 'Route_Efficiency_Template_v2.xlsx');
+  toast('Download Template (3 sheets: Routes + Outlets + Coaching)','success');
 }
 
 // ==================== CRITERIA EDITOR ====================
