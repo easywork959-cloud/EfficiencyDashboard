@@ -2536,6 +2536,7 @@ tbody tr:last-child td{border-bottom:none;}
                   <th class="num">SKU</th>
                   <th class="num">Drop</th>
                   <th class="num">VPO</th>
+                  <th class="num">VPC</th>
                   <th class="num">Strike</th>
                   <th class="num">PSS</th>
                   <th class="num">AEO</th>
@@ -2677,7 +2678,8 @@ function makeMockData(){
             const baseCov = rnd(60, 95);
             const baseSKU = rndInt(35, 95);
             const baseDrop = rnd(800, 3500);
-            const baseVPO = rnd(2.5, 6.5);
+            const baseVPO = rnd(700, 1900);  // Value per Outlet (฿/ร้าน) — benchmark ≥ 1,300
+            const baseVPC = rnd(2.5, 6.5);   // Visit per Call (visits per order) — benchmark ≤ 5
             const baseStrike = rnd(55, 92);
             const basePSS = rnd(50, 88);
             const baseAEO = rnd(60, 95);
@@ -2717,6 +2719,7 @@ function makeMockData(){
                 geo: Math.max(50,Math.min(100,baseGEO*(1+(R()-.5)*.03))),
                 drop: baseDrop*(1+(R()-.5)*.08),
                 vpo: baseVPO*(1+(R()-.5)*.08),
+                vpc: baseVPC*(1+(R()-.5)*.08),
                 strike: Math.max(30,Math.min(98,baseStrike*(1+(R()-.5)*.05))),
                 pss: Math.max(30,Math.min(95,basePSS*(1+(R()-.5)*.06))),
                 aeo: Math.max(40,Math.min(99,baseAEO*(1+(R()-.5)*.04))),
@@ -2950,7 +2953,7 @@ const FORMULAS = {
         cov: r.coverage*.10,
         sku: Math.min(100,(r.sku/80)*100)*.05,
         drop: Math.min(100,(r.drop/2500)*100)*.08,
-        vpo: Math.min(100,(r.vpo/5)*100)*.07,
+        vpo: Math.min(100,(r.vpo/1700)*100)*.07,
         strike: r.strike*.15,
         pss: r.pss*.10,
         aeo: r.aeo*.10,
@@ -2984,7 +2987,8 @@ const KPI_CATALOG = {
   strike:      {label:'Strike Rate',   unit:'%',       key:'strike'},
   pss:         {label:'Perfect Store', unit:'%',       key:'pss'},
   aeo:         {label:'AEO',           unit:'%',       key:'aeo'},
-  vpo:         {label:'VPO',           unit:'',        key:'vpo'},
+  vpo:         {label:'VPO',           unit:'฿/outlet',key:'vpo'},
+  vpc:         {label:'VPC (Visit/Call)',unit:'visits', key:'vpc'},
   drop:        {label:'Drop Size',     unit:'฿',       key:'drop'},
   sku:         {label:'SKU/Visit',     unit:'sku',     key:'sku'}
 };
@@ -3079,7 +3083,7 @@ function rollingAvg(history, months=3, endIdx){
   endIdx = Math.max(0, Math.min(history.length-1, endIdx));
   const startIdx = Math.max(0, endIdx - months + 1);
   const slice = history.slice(startIdx, endIdx+1);
-  const keys = ['sales','cts','active','routeplan','coverage','sku','sku_outlet','geo','drop','vpo','strike','pss','aeo','fuel','dist_km','area','population','total_outlets'];
+  const keys = ['sales','cts','active','routeplan','coverage','sku','sku_outlet','geo','drop','vpo','vpc','strike','pss','aeo','fuel','dist_km','area','population','total_outlets'];
   const avg = {};
   if(!slice.length){
     keys.forEach(k=>avg[k]=0);
@@ -3639,6 +3643,7 @@ function aggregate(rows){
     sku: rows.reduce((a,r)=>a+r.sku,0)/rows.length,
     drop: rows.reduce((a,r)=>a+r.drop,0)/rows.length,
     vpo: rows.reduce((a,r)=>a+r.vpo,0)/rows.length,
+    vpc: rows.reduce((a,r)=>a+(r.vpc||0),0)/rows.length,
     strike: rows.reduce((a,r)=>a+r.strike,0)/rows.length,
     pss: rows.reduce((a,r)=>a+r.pss,0)/rows.length,
     aeo: rows.reduce((a,r)=>a+r.aeo,0)/rows.length,
@@ -3809,10 +3814,17 @@ function renderKPIs(){
     },
     {
       label: 'VPO',
-      value: fmtNum(agg.vpo,2),
+      value: '฿'+fmtTHB(agg.vpo),
       unit: '',
       delta: periodDelta('vpo'),
-      sub: 'Visit Per Order'
+      sub: 'Value per Outlet'
+    },
+    {
+      label: 'VPC',
+      value: fmtNum(agg.vpc||0,1),
+      unit: '',
+      delta: periodDelta('vpc'),
+      sub: 'Visit per Call'
     },
     {
       label: 'Strike Rate',
@@ -4316,7 +4328,8 @@ function renderRouteTable(){
         <td class="num">${r.coverage.toFixed(1)}</td>
         <td class="num">${Math.round(r.sku)}</td>
         <td class="num">${fmtNum(r.drop,0)}</td>
-        <td class="num">${r.vpo.toFixed(2)}</td>
+        <td class="num">฿${fmtTHB(r.vpo)}</td>
+        <td class="num">${(r.vpc||0).toFixed(1)}</td>
         <td class="num">${r.strike.toFixed(1)}%</td>
         <td class="num">${r.pss.toFixed(1)}%</td>
         <td class="num">${r.aeo.toFixed(1)}%</td>
@@ -4550,7 +4563,8 @@ function openDrill(routeId){
     {label:'Coverage',value:r.coverage.toFixed(1)+'%'},
     {label:'SKU',value:Math.round(r.sku)},
     {label:'Drop',value:'฿'+fmtNum(r.drop,0)},
-    {label:'VPO',value:r.vpo.toFixed(2)},
+    {label:'VPO',value:'฿'+fmtTHB(r.vpo)},
+    {label:'VPC',value:(r.vpc||0).toFixed(1)+' visits'},
     {label:'Strike',value:r.strike.toFixed(1)+'%'},
     {label:'PSS',value:r.pss.toFixed(1)+'%'},
     {label:'AEO',value:r.aeo.toFixed(1)+'%'},
@@ -4577,9 +4591,11 @@ function openDrill(routeId){
     ]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'Sales & CTS Trend (7M)',font:{family:'Space Grotesk',size:12}},legend:{position:'bottom',labels:{font:{size:10}}}},scales:{y:{ticks:{callback:v=>'฿'+fmtTHB(v)}}}}
   });
+  // VPO normalized to % of 1700 ฿/outlet target
+  const vpoPct = Math.min(100, (r.vpo/1700)*100);
   CHARTS.drill2 = new Chart(document.getElementById('drillChart2'),{
     type:'radar',
-    data:{labels:['Coverage','SKU','Strike','PSS','AEO','VPO'],datasets:[{label:r.salesman,data:[r.coverage,r.sku,r.strike,r.pss,r.aeo,r.vpo*15],backgroundColor:'rgba(5,150,105,.15)',borderColor:'#059669',borderWidth:2,pointBackgroundColor:'#059669'},{label:'Target',data:[85,75,80,85,90,75],borderColor:'#f59e0b',borderDash:[4,4],pointRadius:0}]},
+    data:{labels:['Coverage','SKU','Strike','PSS','AEO','VPO'],datasets:[{label:r.salesman,data:[r.coverage,r.sku,r.strike,r.pss,r.aeo,vpoPct],backgroundColor:'rgba(5,150,105,.15)',borderColor:'#059669',borderWidth:2,pointBackgroundColor:'#059669'},{label:'Target',data:[85,75,80,85,90,76],borderColor:'#f59e0b',borderDash:[4,4],pointRadius:0}]},
     options:{
       responsive:true,
       maintainAspectRatio: window.innerWidth <= 768 ? true : false,
@@ -4597,7 +4613,10 @@ function openDrill(routeId){
   if(r.coverage < 80) issues.push(`Coverage ${r.coverage.toFixed(1)}% ต่ำ`);
   if(r.strike < 75) issues.push(`Strike rate ${r.strike.toFixed(1)}% ต่ำ`);
   if(r.pss < 80) issues.push(`Perfect Store ${r.pss.toFixed(1)}% ต่ำกว่าเป้า`);
-  if(r.vpo > 5) wins.push(`VPO ${r.vpo.toFixed(2)} ดี`);
+  if(r.vpo < 1300) issues.push(`VPO ฿${fmtTHB(r.vpo)}/ร้าน ต่ำกว่าเกณฑ์ ฿1,300`);
+  else wins.push(`VPO ฿${fmtTHB(r.vpo)}/ร้าน ผ่านเกณฑ์`);
+  if(r.vpc && r.vpc > 5) issues.push(`VPC ${r.vpc.toFixed(1)} ครั้ง/order สูง (เกณฑ์ ≤ 5)`);
+  else if(r.vpc) wins.push(`VPC ${r.vpc.toFixed(1)} ครั้ง/order ดี`);
   if(r.fuel/r.dist_km > 5) issues.push(`ค่าน้ำมัน/km สูง ฿${(r.fuel/r.dist_km).toFixed(2)}/km`);
 
   document.getElementById('drillAnalysis').innerHTML = `
@@ -4675,7 +4694,8 @@ function getExportData(){
     'Coverage %':+r.coverage.toFixed(1),
     'SKU':Math.round(r.sku),
     'Drop Size (฿)':Math.round(r.drop),
-    'VPO':+r.vpo.toFixed(2),
+    'VPO (฿/outlet)':Math.round(r.vpo),
+    'VPC (visits/order)':+(r.vpc||0).toFixed(2),
     'Strike Rate %':+r.strike.toFixed(1),
     'Perfect Store %':+r.pss.toFixed(1),
     'AEO %':+r.aeo.toFixed(1),
@@ -5139,7 +5159,7 @@ function buildSummaryPage(){
     {label:'AEO', value:agg.aeo.toFixed(1)+'%', sub:'Avg Effective Outlet'},
     {label:'SKU/Visit', value:fmtNum(agg.sku,1), sub:'productivity'},
     {label:'Drop Size', value:'฿'+fmtNum(agg.drop,0), sub:'avg per drop'},
-    {label:'VPO', value:agg.vpo.toFixed(2), sub:'visit per order'},
+    {label:'VPO', value:'฿'+fmtTHB(agg.vpo), sub:'value per outlet'},
     {label:'Strike Rate', value:agg.strike.toFixed(1)+'%', sub:'hit rate'},
     {label:'Perfect Store', value:agg.pss.toFixed(1)+'%', sub:'PSS score'}
   ];
@@ -5923,6 +5943,7 @@ function mergeRoutesData(results, existing){
             sku: latest.sku,
             drop: latest.drop,
             vpo: latest.vpo,
+            vpc: latest.vpc,
             strike: latest.strike,
             pss: latest.pss,
             aeo: latest.aeo,
@@ -5978,7 +5999,7 @@ function mergeRoutesData(results, existing){
         } else if(lastFilled){
           aligned.push({...lastFilled, _filled: true, _period: p});
         } else {
-          aligned.push({_period: p, _filled: true, sales:0, cts:0, active:0, sku:0, drop:0, vpo:0, strike:0, pss:0, aeo:0, coverage:0});
+          aligned.push({_period: p, _filled: true, sales:0, cts:0, active:0, sku:0, drop:0, vpo:0, vpc:0, strike:0, pss:0, aeo:0, coverage:0});
         }
       });
       r.history = aligned;
@@ -5988,7 +6009,7 @@ function mergeRoutesData(results, existing){
       if(latest){
         Object.assign(r, {
           sales: latest.sales, cts: latest.cts, active: latest.active,
-          sku: latest.sku, drop: latest.drop, vpo: latest.vpo,
+          sku: latest.sku, drop: latest.drop, vpo: latest.vpo, vpc: latest.vpc,
           strike: latest.strike, pss: latest.pss, aeo: latest.aeo,
           coverage: latest.coverage
         });
@@ -6264,6 +6285,7 @@ function importRowsWide(rows){
         geo: Math.min(100,m.geo*(1+Math.sin(mm*0.9)*.03)),
         drop: m.drop*(1+Math.sin(mm*.8)*.05),
         vpo: m.vpo*(1+Math.sin(mm)*.04),
+        vpc: (m.vpc||0)*(1+Math.sin(mm*1.2)*.05),
         strike: Math.min(98,m.strike*(1+Math.sin(mm*0.9)*.03)),
         pss: Math.min(95,m.pss*(1+Math.sin(mm)*.04)),
         aeo: Math.min(99,m.aeo*(1+Math.sin(mm*1.2)*.03)),
@@ -6301,7 +6323,8 @@ function rowToMetrics(r){
     sku_outlet: +(r['SKU/Outlet']||r['sku_outlet']||0) || 0,
     geo: +(r['GEO fencing %']||r['geo']||0) || 0,
     drop: +(r['Drop Size (฿)']||r['drop']||0) || 1800,
-    vpo: +(r['VPO']||r['vpo']||0) || 3.5,
+    vpo: +(r['VPO (฿/outlet)']||r['VPO']||r['vpo']||0) || 1300,
+    vpc: +(r['VPC (visits/order)']||r['VPC']||r['vpc']||0) || 4.5,
     strike: +(r['Strike Rate %']||r['strike']||0) || 72,
     pss: +(r['Perfect Store %']||r['pss']||0) || 70,
     aeo: +(r['AEO %']||r['aeo']||0) || 78,
@@ -6316,7 +6339,7 @@ function rowToMetrics(r){
 function zeroMetrics(period){
   return {
     sales:0, cts:0, active:0, routeplan:0, coverage:0, sku:0, sku_outlet:0, geo:0,
-    drop:0, vpo:0, strike:0, pss:0, aeo:0, fuel:0, dist_km:0, area:0,
+    drop:0, vpo:0, vpc:0, strike:0, pss:0, aeo:0, fuel:0, dist_km:0, area:0,
     _filled:true, _period:period
   };
 }
@@ -6580,7 +6603,7 @@ function downloadRoutesTemplate(mode){
   const routeHeaders = [
     'Period','Route ID','Salesman','RS','ASM','Distributor','Region','Visit Pattern','Frequency','Sales Type Default',
     'Sales (฿)','CTS (฿)','Active Stores','Total Outlets','Routeplan','Coverage %','GEO fencing %',
-    'SKU','SKU/Outlet','Drop Size (฿)','VPO','Strike Rate %','Perfect Store %','AEO %',
+    'SKU','SKU/Outlet','Drop Size (฿)','VPO (฿/outlet)','VPC (visits/order)','Strike Rate %','Perfect Store %','AEO %',
     'Fuel (฿)','Distance (km)','Area (km²)','Population'
   ];
 
@@ -6590,7 +6613,7 @@ function downloadRoutesTemplate(mode){
     routeRows.push([
       p,'R0001','สมหมาย 01','อนุชา 11','สมชาย 100','CM-Chiang Mai Trade','NOR','Daily-D','F1','Secondary',
       420000+i*15000, 52000+i*1500, 410+i*5, 720+i*5, 575+i*3, 91.2+i*0.4, 95.8+i*0.2, 71+i*0.5, 4.1+i*0.05,
-      1820+i*15, 5.3+i*0.05, 81.2+i*0.6, 77.8+i*0.3, 87.9+i*0.4, 9300+i*100, 2350+i*25, 220, 180000+i*2000
+      1820+i*15, 1450+i*30, 4.2-i*0.05, 81.2+i*0.6, 77.8+i*0.3, 87.9+i*0.4, 9300+i*100, 2350+i*25, 220, 180000+i*2000
     ]);
   });
   // Route R0002 × periods
@@ -6598,7 +6621,7 @@ function downloadRoutesTemplate(mode){
     routeRows.push([
       p,'R0002','วุฒิ 02','สมศักดิ์ 12','วิชัย 101','KK-Khon Kaen Trade','NOE','Weekly W1','F2','Secondary',
       365000+i*7500, 46500+i*750, 278+i*3, 490+i*2, 408+i*1, 87.5+i*0.4, 91.2+i*0.3, 63+i*1, 3.75+i*0.03,
-      1590+i*15, 4.5+i*0.05, 77.5+i*0.4, 71.5+i*0.3, 83.5+i*0.4, 7700+i*50, 1780+i*10, 180, 95000+i*1000
+      1590+i*15, 1240+i*20, 5.3-i*0.07, 77.5+i*0.4, 71.5+i*0.3, 83.5+i*0.4, 7700+i*50, 1780+i*10, 180, 95000+i*1000
     ]);
   });
 
@@ -6606,12 +6629,12 @@ function downloadRoutesTemplate(mode){
   routeSheet['!cols'] = [
     {wch:9},{wch:9},{wch:14},{wch:13},{wch:13},{wch:22},{wch:8},{wch:12},{wch:10},{wch:14},
     {wch:11},{wch:11},{wch:12},{wch:12},{wch:11},{wch:11},{wch:13},
-    {wch:7},{wch:10},{wch:11},{wch:7},{wch:12},{wch:14},{wch:8},
+    {wch:7},{wch:10},{wch:11},{wch:14},{wch:14},{wch:12},{wch:14},{wch:8},
     {wch:9},{wch:11},{wch:10},{wch:11}
   ];
   routeSheet['!freeze'] = {xSplit:2, ySplit:1};
   for(let r=1;r<=routeRows.length;r++){
-    [10,11,19,24,27].forEach(c=>{
+    [10,11,19,20,25,28].forEach(c=>{  // Sales,CTS,Drop,VPO,Fuel,Population
       const a = XLSX.utils.encode_cell({r,c});
       if(routeSheet[a]) routeSheet[a].z = '#,##0';
     });
@@ -6781,7 +6804,9 @@ function downloadRoutesTemplate(mode){
     ['Total Outlets — universe ทั้งหมดในพื้นที่ (ใช้คำนวณ Density)'],
     ['Routeplan — จำนวนร้านตามแผน (สำหรับคำนวณ Coverage %)'],
     ['Coverage %, GEO fencing %, Strike Rate %, Perfect Store %, AEO % — 0-100 (ไม่ใส่ %)'],
-    ['SKU, SKU/Outlet, Drop Size (฿), VPO — KPI การขาย'],
+    ['SKU, SKU/Outlet, Drop Size (฿) — KPI การขาย'],
+    ['VPO (฿/outlet) — Value per Outlet = Sales ÷ Active Stores · เกณฑ์ ≥ 1,300 บาท/ร้าน'],
+    ['VPC (visits/order) — Visit per Call = จำนวนครั้งที่เยี่ยมร้านต่อ 1 order · เกณฑ์ ≤ 5 ครั้ง/order'],
     ['Fuel (฿), Distance (km), Area (km²), Population — ข้อมูลโลจิสติกส์/ประชากร'],
     [''],
     ['============================================================'],
@@ -7265,29 +7290,29 @@ const DEFAULT_RADAR_TARGETS = {
     coverage: {max: 100,    line: 85, unit: '%',       label: 'Coverage', desc: '% Active / Routeplan'},
     sku:      {max: 80,     line: 85, unit: 'SKU',     label: 'SKU',      desc: 'จำนวน SKU เฉลี่ย/route'},
     drop:     {max: 2500,   line: 85, unit: '฿/drop',  label: 'Drop',     desc: 'Drop size เฉลี่ย'},
-    vpo:      {max: 5,      line: 85, unit: 'visits',  label: 'VPO',      desc: 'Visit per Order'},
+    vpo:      {max: 1700,   line: 76, unit: '฿/outlet',label: 'VPO',      desc: 'Value per Outlet (≥ 1,300 บาท/ร้าน)'},
     strike:   {max: 100,    line: 85, unit: '%',       label: 'Strike',   desc: 'Strike rate %'},
     pss:      {max: 100,    line: 85, unit: '%',       label: 'PSS',      desc: 'Perfect Store Score %'},
     aeo:      {max: 100,    line: 85, unit: '%',       label: 'AEO',      desc: 'Avg Effective Outlet %'}
   },
   Credit: {
-    sales:    {max: 800000, line: 90}, // Credit เน้นร้านใหญ่ → target สูง
-    active:   {max: 80,     line: 80}, // Credit จำนวนร้านน้อยกว่า แต่ deep
+    sales:    {max: 800000, line: 90},
+    active:   {max: 80,     line: 80},
     coverage: {max: 100,    line: 90},
     sku:      {max: 100,    line: 85},
-    drop:     {max: 5000,   line: 85}, // Drop size สูงกว่า
-    vpo:      {max: 3,      line: 80},
+    drop:     {max: 5000,   line: 85},
+    vpo:      {max: 2700,   line: 74}, // Credit ร้านใหญ่ → VPO ควร ≥ 2,000 บาท/ร้าน
     strike:   {max: 100,    line: 88},
     pss:      {max: 100,    line: 88},
     aeo:      {max: 100,    line: 85}
   },
   Presales: {
     sales:    {max: 500000, line: 85},
-    active:   {max: 200,    line: 85}, // Presales เยี่ยมร้านเยอะกว่า
+    active:   {max: 200,    line: 85},
     coverage: {max: 100,    line: 80},
     sku:      {max: 60,     line: 80},
-    drop:     {max: 2000,   line: 85}, // Drop size ต่ำกว่า
-    vpo:      {max: 6,      line: 85},
+    drop:     {max: 2000,   line: 85},
+    vpo:      {max: 1400,   line: 75}, // Presales ร้านเล็ก → VPO ~1,050 บาท/ร้าน
     strike:   {max: 100,    line: 80},
     pss:      {max: 100,    line: 80},
     aeo:      {max: 100,    line: 82}
