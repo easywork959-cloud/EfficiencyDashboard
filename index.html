@@ -2441,7 +2441,7 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="card-head">
           <div>
             <div class="card-title"><span class="icon-dot" style="background:#e8a87c;"></span>Performance by <span id="segPerfTitle">Segment</span></div>
-            <div class="card-subtitle">RE / Sales / Cost · 3M rolling</div>
+            <div class="card-subtitle">Sales · RE · Strike · PSS</div>
           </div>
         </div>
         <div style="height:280px;position:relative;"><canvas id="segChart"></canvas></div>
@@ -9279,16 +9279,32 @@ function renderSegmentationViz(){
   if(!rows.length){barsEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink-soft);">ไม่มีข้อมูล</div>';return;}
 
   // Aggregate by SEGMENT at OUTLET level (1 route has many outlets, each with its own segment)
+  // Respect other outlet-level filters (Province/ShopType/SaleType) — skip filterSegment since we group by it
   const groups = {};
   rows.forEach(r=>{
     (r.outlets||[]).forEach(o=>{
+      const fShop = document.getElementById('filterShopType')?.value || 'all';
+      const fProv = document.getElementById('filterProvince')?.value || 'all';
+      const fSale = document.getElementById('filterSaleType')?.value || 'all';
+      if(fShop !== 'all'){
+        if(o.shopType !== fShop && !(fShop === 'OTC' && SHOP_TYPE_GROUPED_AS_OTC.includes(o.shopType))) return;
+      }
+      if(fProv !== 'all' && o.province !== fProv) return;
+      if(fSale !== 'all' && o.saleType !== fSale) return;
+
       const s = o.segment || 'Unknown';
-      if(!groups[s]) groups[s]={segment:s, outlets:0, routes:new Set(), sales:0, monthlySales:0, strike:0, strikeCount:0};
+      if(!groups[s]) groups[s]={segment:s, outlets:0, routes:new Set(), monthlySales:0, strike:0, strikeCount:0, reSum:0, pssSum:0, reCount:0};
       groups[s].outlets++;
-      groups[s].routes.add(r.routeId);
       groups[s].monthlySales += (o.monthlySales || 0);
       groups[s].strike += o.strikeRate || 0;
       groups[s].strikeCount++;
+      // Only count route's RE/PSS once per route (not per outlet)
+      if(!groups[s].routes.has(r.routeId)){
+        groups[s].routes.add(r.routeId);
+        groups[s].reSum += r.re || 0;
+        groups[s].pssSum += r.pss || 0;
+        groups[s].reCount++;
+      }
     });
   });
   const entries = Object.values(groups).map(g=>({
@@ -9296,9 +9312,9 @@ function renderSegmentationViz(){
     outlets: g.outlets,
     count: g.routes.size, // route count (unique)
     sales: g.monthlySales,
-    avgRE: 0, // not applicable at outlet level
+    avgRE: g.reCount > 0 ? g.reSum/g.reCount : 0,
     avgStrike: g.strikeCount > 0 ? g.strike/g.strikeCount : 0,
-    avgPSS: 70 + (g.strike/g.strikeCount||0)*0.1 // proxy
+    avgPSS: g.reCount > 0 ? g.pssSum/g.reCount : 0
   }));
   entries.sort((a,b)=>b.outlets - a.outlets);
   const totalOutlets = entries.reduce((a,e)=>a+e.outlets,0);
@@ -9330,18 +9346,32 @@ function renderSegmentationViz(){
       data: {
         labels: entries.map(e=>e.segment),
         datasets: [
-          {label:'Route Efficiency', data: entries.map(e=>e.avgRE), backgroundColor:'#e8a87c', yAxisID:'y1', borderRadius:4},
-          {label:'Strike Rate (%)', data: entries.map(e=>e.avgStrike), backgroundColor:'#7fb8d1', yAxisID:'y2', borderRadius:4},
-          {label:'PSS (%)', data: entries.map(e=>e.avgPSS), backgroundColor:'#7bbfae', yAxisID:'y2', borderRadius:4}
+          {label:'Sales (฿)', data: entries.map(e=>e.sales), backgroundColor:'#e8a87c', yAxisID:'ySales', borderRadius:4, order:2},
+          {label:'Route Efficiency', data: entries.map(e=>+e.avgRE.toFixed(2)), backgroundColor:'#7c3aed', yAxisID:'yRE', borderRadius:4, order:1},
+          {label:'Strike Rate (%)', data: entries.map(e=>+e.avgStrike.toFixed(1)), backgroundColor:'#7fb8d1', yAxisID:'yPct', borderRadius:4, order:3},
+          {label:'PSS (%)', data: entries.map(e=>+e.avgPSS.toFixed(1)), backgroundColor:'#7bbfae', yAxisID:'yPct', borderRadius:4, order:4}
         ]
       },
       options: {
         responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}},
+        plugins:{
+          legend:{position:'bottom', labels:{font:{size:10.5},boxWidth:11,boxHeight:11,padding:8}},
+          tooltip:{
+            callbacks:{
+              label:c=>{
+                const v = c.parsed.y;
+                if(c.dataset.label.startsWith('Sales')) return ` ${c.dataset.label}: ฿${fmtTHB(v)}`;
+                if(c.dataset.label.startsWith('Route')) return ` ${c.dataset.label}: ${v.toFixed(2)}×`;
+                return ` ${c.dataset.label}: ${v.toFixed(1)}%`;
+              }
+            }
+          }
+        },
         scales:{
           x:{grid:{display:false}, ticks:{font:{size:10.5}}},
-          y1:{type:'linear', position:'left', title:{display:true, text:'RE', font:{size:10}}, ticks:{font:{size:10}}},
-          y2:{type:'linear', position:'right', title:{display:true, text:'% (Strike/PSS)', font:{size:10}}, ticks:{font:{size:10}}, grid:{drawOnChartArea:false}}
+          ySales:{type:'linear', position:'left', title:{display:true, text:'Sales (฿)', font:{size:10}}, ticks:{font:{size:9.5}, callback:v=>'฿'+fmtTHB(v)}, grid:{color:'rgba(0,0,0,.04)'}},
+          yRE:{type:'linear', position:'right', title:{display:true, text:'RE / Strike / PSS', font:{size:10}}, ticks:{font:{size:9.5}}, grid:{drawOnChartArea:false}, max:100, min:0},
+          yPct:{type:'linear', display:false, max:100, min:0}
         }
       }
     });
@@ -9354,6 +9384,21 @@ function toggleSegmentFilter(seg){
   applyFilters();
 }
 
+// Helper: check ว่า outlet ผ่าน outlet-level filters ปัจจุบัน
+function outletPassesFilters(o){
+  const fSeg = document.getElementById('filterSegment')?.value || 'all';
+  const fShop = document.getElementById('filterShopType')?.value || 'all';
+  const fProv = document.getElementById('filterProvince')?.value || 'all';
+  const fSale = document.getElementById('filterSaleType')?.value || 'all';
+  if(fSeg !== 'all' && o.segment !== fSeg) return false;
+  if(fShop !== 'all'){
+    if(o.shopType !== fShop && !(fShop === 'OTC' && SHOP_TYPE_GROUPED_AS_OTC.includes(o.shopType))) return false;
+  }
+  if(fProv !== 'all' && o.province !== fProv) return false;
+  if(fSale !== 'all' && o.saleType !== fSale) return false;
+  return true;
+}
+
 // ==================== SHOP TYPE VISUALIZATION ====================
 function renderShopTypeViz(){
   document.getElementById('shopPanelTitle').textContent = SHOP_TYPE_NAME;
@@ -9363,14 +9408,30 @@ function renderShopTypeViz(){
   const groups = {};
   rows.forEach(r=>{
     (r.outlets||[]).forEach(o=>{
+      // Respect outlet-level filters (Segment / Province / Sale Type)
+      // Skip filterShopType here since we're grouping BY shop type
+      const fSeg = document.getElementById('filterSegment')?.value || 'all';
+      const fProv = document.getElementById('filterProvince')?.value || 'all';
+      const fSale = document.getElementById('filterSaleType')?.value || 'all';
+      if(fSeg !== 'all' && o.segment !== fSeg) return;
+      if(fProv !== 'all' && o.province !== fProv) return;
+      if(fSale !== 'all' && o.saleType !== fSale) return;
+
       // Group OWS/OTR/HOS/OPM/OTH/OCH → OTC for display
       const s = mapShopTypeToDisplay(o.shopType || 'Unknown');
-      if(!groups[s]) groups[s]={shopType:s, outlets:0, routes:new Set(), monthlySales:0, strike:0, strikeCount:0};
+      if(!groups[s]) groups[s]={shopType:s, outlets:0, routes:new Set(), monthlySales:0, strike:0, strikeCount:0, reSum:0, pssSum:0, aeoSum:0, reCount:0};
       groups[s].outlets++;
-      groups[s].routes.add(r.routeId);
       groups[s].monthlySales+=(o.monthlySales||0);
       groups[s].strike+=(o.strikeRate||0);
       groups[s].strikeCount++;
+      // Only count route's RE/PSS/AEO once per route per shop type
+      if(!groups[s].routes.has(r.routeId)){
+        groups[s].routes.add(r.routeId);
+        groups[s].reSum += r.re || 0;
+        groups[s].pssSum += r.pss || 0;
+        groups[s].aeoSum += r.aeo || 0;
+        groups[s].reCount++;
+      }
     });
   });
   const entries = Object.values(groups).map(g=>({
@@ -9379,10 +9440,10 @@ function renderShopTypeViz(){
     count: g.outlets,
     routeCount: g.routes.size,
     sales: g.monthlySales,
-    avgRE: 0,
+    avgRE: g.reCount > 0 ? g.reSum/g.reCount : 0,
     avgStrike: g.strikeCount>0?g.strike/g.strikeCount:0,
-    avgPSS: 70 + (g.strikeCount>0?g.strike/g.strikeCount*0.1:0),
-    avgAEO: 75 + (g.strikeCount>0?g.strike/g.strikeCount*0.1:0)
+    avgPSS: g.reCount > 0 ? g.pssSum/g.reCount : 0,
+    avgAEO: g.reCount > 0 ? g.aeoSum/g.reCount : 0
   }));
   entries.sort((a,b)=>b.count - a.count);
 
@@ -9451,20 +9512,32 @@ function renderShopTypeViz(){
       data:{
         labels,
         datasets:[
-          {label:'Sales (M ฿)', data:entries.map(e=>e.sales/1e6), backgroundColor:'#7fb8d1', yAxisID:'y1', borderRadius:4},
-          {label:'RE', data:entries.map(e=>e.avgRE), backgroundColor:'#e8a87c', yAxisID:'y2', borderRadius:4},
-          {label:'Strike %', data:entries.map(e=>e.avgStrike), backgroundColor:'#f5c060', yAxisID:'y3', borderRadius:4},
-          {label:'PSS %', data:entries.map(e=>e.avgPSS), backgroundColor:'#7bbfae', yAxisID:'y3', borderRadius:4}
+          {label:'Sales (M ฿)', data:entries.map(e=>+(e.sales/1e6).toFixed(2)), backgroundColor:'#7fb8d1', yAxisID:'ySales', borderRadius:4, order:2},
+          {label:'RE', data:entries.map(e=>+e.avgRE.toFixed(2)), backgroundColor:'#7c3aed', yAxisID:'yRE', borderRadius:4, order:1},
+          {label:'Strike %', data:entries.map(e=>+e.avgStrike.toFixed(1)), backgroundColor:'#f5c060', yAxisID:'yPct', borderRadius:4, order:3},
+          {label:'PSS %', data:entries.map(e=>+e.avgPSS.toFixed(1)), backgroundColor:'#7bbfae', yAxisID:'yPct', borderRadius:4, order:4}
         ]
       },
       options:{
         responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{position:'bottom', labels:{font:{size:10.5}}}},
+        plugins:{
+          legend:{position:'bottom', labels:{font:{size:10.5},boxWidth:11,boxHeight:11,padding:8}},
+          tooltip:{
+            callbacks:{
+              label:c=>{
+                const v = c.parsed.y;
+                if(c.dataset.label.startsWith('Sales')) return ` ${c.dataset.label}: ฿${v.toFixed(2)}M`;
+                if(c.dataset.label === 'RE') return ` RE: ${v.toFixed(2)}×`;
+                return ` ${c.dataset.label}: ${v.toFixed(1)}%`;
+              }
+            }
+          }
+        },
         scales:{
           x:{grid:{display:false}, ticks:{font:{size:10.5}, maxRotation:35}},
-          y1:{type:'linear', position:'left', title:{display:true, text:'Sales (M฿)', font:{size:10}}, ticks:{font:{size:10}}},
-          y2:{display:false, type:'linear', position:'right'},
-          y3:{display:false, type:'linear', position:'right'}
+          ySales:{type:'linear', position:'left', title:{display:true, text:'Sales (M฿)', font:{size:10}}, ticks:{font:{size:9.5}}, grid:{color:'rgba(0,0,0,.04)'}},
+          yRE:{type:'linear', position:'right', title:{display:true, text:'RE / Strike / PSS', font:{size:10}}, ticks:{font:{size:9.5}}, grid:{drawOnChartArea:false}, max:100, min:0},
+          yPct:{type:'linear', display:false, max:100, min:0}
         }
       }
     });
